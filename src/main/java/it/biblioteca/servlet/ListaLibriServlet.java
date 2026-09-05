@@ -21,12 +21,15 @@ public class ListaLibriServlet extends HttpServlet {
     private final LibroDAO libroDAO = new LibroDAO();
 
     @Override
-    protected void doGet(HttpServletRequest request,
-                         HttpServletResponse response)
+    protected void doGet(
+            HttpServletRequest request,
+            HttpServletResponse response)
             throws ServletException, IOException {
 
         if (!utenteAutenticato(request)) {
-            response.sendRedirect("login.jsp");
+            response.sendRedirect(
+                    request.getContextPath() + "/login.jsp"
+            );
             return;
         }
 
@@ -39,17 +42,27 @@ public class ListaLibriServlet extends HttpServlet {
                    .forward(request, response);
 
         } catch (SQLException e) {
+
+            getServletContext().log(
+                    "Errore durante il caricamento dei libri",
+                    e
+            );
+
             throw new ServletException(
-                    "Errore durante il caricamento dei libri", e);
+                    "Impossibile caricare la lista dei libri."
+            );
         }
     }
 
-    private boolean utenteAutenticato(HttpServletRequest request) {
+    private boolean utenteAutenticato(
+            HttpServletRequest request) {
 
-        HttpSession session = request.getSession(false);
+        HttpSession session =
+                request.getSession(false);
 
         return session != null
                 && Boolean.TRUE.equals(
-                        session.getAttribute("autenticato"));
+                        session.getAttribute("autenticato")
+                );
     }
 }

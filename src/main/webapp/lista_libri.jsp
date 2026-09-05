@@ -1,21 +1,41 @@
 <%@ page language="java"
     contentType="text/html; charset=UTF-8"
-    pageEncoding="UTF-8"%>
+    pageEncoding="UTF-8" %>
 
 <%@ page import="java.util.List" %>
 <%@ page import="it.biblioteca.model.Libro" %>
 
-<%
-    Object autenticato = session.getAttribute("autenticato");
+<%!
+    private String escapeHtml(Object valore) {
 
-    if (autenticato == null || !(Boolean) autenticato) {
-        response.sendRedirect("login.jsp");
+        if (valore == null) {
+            return "";
+        }
+
+        return String.valueOf(valore)
+                .replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+                .replace("\"", "&quot;")
+                .replace("'", "&#39;");
+    }
+%>
+
+<%
+    if (!Boolean.TRUE.equals(
+            session.getAttribute("autenticato"))) {
+
+        response.sendRedirect(
+                request.getContextPath() + "/login.jsp"
+        );
         return;
     }
 
     @SuppressWarnings("unchecked")
     List<Libro> libri =
             (List<Libro>) request.getAttribute("libri");
+
+    String contextPath = request.getContextPath();
 %>
 
 <!DOCTYPE html>
@@ -36,14 +56,15 @@
             padding: 8px;
         }
     </style>
-
 </head>
 
 <body>
 
     <h1>Lista Libri</h1>
 
-    <a href="home.jsp">Torna alla Home</a>
+    <a href="<%= contextPath %>/home.jsp">
+        Torna alla Home
+    </a>
 
     <br><br>
 
@@ -55,65 +76,72 @@
 
         <table>
 
-            <tr>
-                <th>ID</th>
-                <th>Titolo</th>
-                <th>Autore</th>
-                <th>ISBN</th>
-                <th>Anno</th>
-                <th>Genere</th>
-                <th>Disponibile</th>
-                <th>Azioni</th>
-            </tr>
-
-            <% for (Libro libro : libri) { %>
-
+            <thead>
                 <tr>
-
-                    <td><%= libro.getIdLibro() %></td>
-
-                    <td><%= libro.getTitolo() %></td>
-
-                    <td><%= libro.getAutore() %></td>
-
-                    <td>
-                        <%= libro.getIsbn() != null
-                                ? libro.getIsbn()
-                                : "" %>
-                    </td>
-
-                    <td>
-                        <%= libro.getAnnoPubblicazione() != null
-                                ? libro.getAnnoPubblicazione()
-                                : "" %>
-                    </td>
-
-                    <td>
-                        <%= libro.getGenere() != null
-                                ? libro.getGenere()
-                                : "" %>
-                    </td>
-
-                    <td>
-                        <%= libro.isDisponibile()
-                                ? "Sì"
-                                : "No" %>
-                    </td>
-
-                    <td>
-                        <a href="modifica-libro?id=<%= libro.getIdLibro() %>">
-                            Modifica
-                        </a>
-                    </td>
-
+                    <th>ID</th>
+                    <th>Titolo</th>
+                    <th>Autore</th>
+                    <th>ISBN</th>
+                    <th>Anno</th>
+                    <th>Genere</th>
+                    <th>Disponibile</th>
+                    <th>Azioni</th>
                 </tr>
+            </thead>
 
-            <% } %>
+            <tbody>
+
+                <% for (Libro libro : libri) { %>
+
+                    <tr>
+
+                        <td>
+                            <%= libro.getIdLibro() %>
+                        </td>
+
+                        <td>
+                            <%= escapeHtml(libro.getTitolo()) %>
+                        </td>
+
+                        <td>
+                            <%= escapeHtml(libro.getAutore()) %>
+                        </td>
+
+                        <td>
+                            <%= escapeHtml(libro.getIsbn()) %>
+                        </td>
+
+                        <td>
+                            <%= escapeHtml(
+                                    libro.getAnnoPubblicazione()
+                               ) %>
+                        </td>
+
+                        <td>
+                            <%= escapeHtml(libro.getGenere()) %>
+                        </td>
+
+                        <td>
+                            <%= libro.isDisponibile()
+                                    ? "Sì"
+                                    : "No" %>
+                        </td>
+
+                        <td>
+                            <a href="<%= contextPath %>/modifica-libro?id=<%= libro.getIdLibro() %>">
+                                Modifica
+                            </a>
+                        </td>
+
+                    </tr>
+
+                <% } %>
+
+            </tbody>
 
         </table>
 
     <% } %>
 
 </body>
-
 </html>

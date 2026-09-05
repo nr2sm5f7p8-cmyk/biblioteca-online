@@ -1,85 +1,198 @@
 <%@ page language="java"
     contentType="text/html; charset=UTF-8"
-    pageEncoding="UTF-8"%>
+    pageEncoding="UTF-8" %>
 
+<%@ page import="java.time.Year" %>
 <%@ page import="it.biblioteca.model.Libro" %>
 
-<%
-    Object autenticato = session.getAttribute("autenticato");
+<%!
+    private String escapeHtml(Object valore) {
 
-    if (autenticato == null || !(Boolean) autenticato) {
-        response.sendRedirect("login.jsp");
+        if (valore == null) {
+            return "";
+        }
+
+        return String.valueOf(valore)
+                .replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+                .replace("\"", "&quot;")
+                .replace("'", "&#39;");
+    }
+%>
+
+<%
+    if (!Boolean.TRUE.equals(
+            session.getAttribute("autenticato"))) {
+
+        response.sendRedirect(
+                request.getContextPath() + "/login.jsp"
+        );
         return;
     }
 
-    Libro libro = (Libro) request.getAttribute("libro");
+    Libro libro =
+            (Libro) request.getAttribute("libro");
 
     if (libro == null) {
-        response.sendRedirect("libri");
+
+        response.sendRedirect(
+                request.getContextPath() + "/libri"
+        );
         return;
     }
+
+    String contextPath = request.getContextPath();
+
+    boolean post =
+            "POST".equalsIgnoreCase(request.getMethod());
+
+    String titolo = post
+            ? request.getParameter("titolo")
+            : libro.getTitolo();
+
+    String autore = post
+            ? request.getParameter("autore")
+            : libro.getAutore();
+
+    String isbn = post
+            ? request.getParameter("isbn")
+            : libro.getIsbn();
+
+    String genere = post
+            ? request.getParameter("genere")
+            : libro.getGenere();
+
+    String annoPubblicazione;
+
+    if (post) {
+        annoPubblicazione =
+                request.getParameter("annoPubblicazione");
+    } else {
+        annoPubblicazione =
+                libro.getAnnoPubblicazione() != null
+                ? String.valueOf(libro.getAnnoPubblicazione())
+                : "";
+    }
+
+    boolean disponibileChecked = post
+            ? request.getParameter("disponibile") != null
+            : libro.isDisponibile();
+
+    int annoMassimo = Year.now().getValue() + 1;
+
+    Object errore = request.getAttribute("errore");
 %>
 
 <!DOCTYPE html>
 <html>
+
 <head>
     <meta charset="UTF-8">
     <title>Modifica Libro - Biblioteca Online</title>
 </head>
+
 <body>
 
     <h1>Modifica libro</h1>
 
-    <form action="modifica-libro" method="post">
+    <% if (errore != null) { %>
 
-        <input type="hidden"
-               name="idLibro"
-               value="<%= libro.getIdLibro() %>">
+        <p style="color: red;">
+            <%= escapeHtml(errore) %>
+        </p>
 
-        <label>Titolo:</label>
-        <input type="text"
-               name="titolo"
-               value="<%= libro.getTitolo() %>"
-               required>
+    <% } %>
 
-        <br><br>
+    <form action="<%= contextPath %>/modifica-libro"
+          method="post">
 
-        <label>Autore:</label>
-        <input type="text"
-               name="autore"
-               value="<%= libro.getAutore() %>"
-               required>
+        <input
+            type="hidden"
+            name="idLibro"
+            value="<%= libro.getIdLibro() %>"
+        >
 
-        <br><br>
+        <label for="titolo">
+            Titolo:
+        </label>
 
-        <label>ISBN:</label>
-        <input type="text"
-               name="isbn"
-               value="<%= libro.getIsbn() != null ? libro.getIsbn() : "" %>">
-
-        <br><br>
-
-        <label>Anno pubblicazione:</label>
-        <input type="number"
-               name="annoPubblicazione"
-               value="<%= libro.getAnnoPubblicazione() != null
-                       ? libro.getAnnoPubblicazione()
-                       : "" %>">
+        <input
+            type="text"
+            id="titolo"
+            name="titolo"
+            value="<%= escapeHtml(titolo) %>"
+            required
+        >
 
         <br><br>
 
-        <label>Genere:</label>
-        <input type="text"
-               name="genere"
-               value="<%= libro.getGenere() != null ? libro.getGenere() : "" %>">
+        <label for="autore">
+            Autore:
+        </label>
+
+        <input
+            type="text"
+            id="autore"
+            name="autore"
+            value="<%= escapeHtml(autore) %>"
+            required
+        >
 
         <br><br>
 
-        <label>Disponibile:</label>
-        <input type="checkbox"
-               name="disponibile"
-               value="true"
-               <%= libro.isDisponibile() ? "checked" : "" %>>
+        <label for="isbn">
+            ISBN:
+        </label>
+
+        <input
+            type="text"
+            id="isbn"
+            name="isbn"
+            value="<%= escapeHtml(isbn) %>"
+        >
+
+        <br><br>
+
+        <label for="annoPubblicazione">
+            Anno pubblicazione:
+        </label>
+
+        <input
+            type="number"
+            id="annoPubblicazione"
+            name="annoPubblicazione"
+            min="1"
+            max="<%= annoMassimo %>"
+            value="<%= escapeHtml(annoPubblicazione) %>"
+        >
+
+        <br><br>
+
+        <label for="genere">
+            Genere:
+        </label>
+
+        <input
+            type="text"
+            id="genere"
+            name="genere"
+            value="<%= escapeHtml(genere) %>"
+        >
+
+        <br><br>
+
+        <label for="disponibile">
+            Disponibile:
+        </label>
+
+        <input
+            type="checkbox"
+            id="disponibile"
+            name="disponibile"
+            value="true"
+            <%= disponibileChecked ? "checked" : "" %>
+        >
 
         <br><br>
 
@@ -91,7 +204,9 @@
 
     <br>
 
-    <a href="libri">Torna alla lista libri</a>
+    <a href="<%= contextPath %>/libri">
+        Torna alla lista libri
+    </a>
 
 </body>
 </html>

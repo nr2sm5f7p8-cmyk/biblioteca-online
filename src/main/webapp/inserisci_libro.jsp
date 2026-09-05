@@ -1,64 +1,146 @@
 <%@ page language="java"
     contentType="text/html; charset=UTF-8"
-    pageEncoding="UTF-8"%>
+    pageEncoding="UTF-8" %>
+
+<%@ page import="java.time.Year" %>
+
+<%!
+    private String escapeHtml(Object valore) {
+
+        if (valore == null) {
+            return "";
+        }
+
+        return String.valueOf(valore)
+                .replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+                .replace("\"", "&quot;")
+                .replace("'", "&#39;");
+    }
+%>
 
 <%
-    Object autenticato = session.getAttribute("autenticato");
+    if (!Boolean.TRUE.equals(
+            session.getAttribute("autenticato"))) {
 
-    if (autenticato == null || !(Boolean) autenticato) {
-        response.sendRedirect("login.jsp");
+        response.sendRedirect(
+                request.getContextPath() + "/login.jsp"
+        );
         return;
     }
+
+    String contextPath = request.getContextPath();
+
+    String titolo = request.getParameter("titolo");
+    String autore = request.getParameter("autore");
+    String isbn = request.getParameter("isbn");
+    String annoPubblicazione =
+            request.getParameter("annoPubblicazione");
+    String genere = request.getParameter("genere");
+
+    boolean disponibileChecked =
+            !"POST".equalsIgnoreCase(request.getMethod())
+            || request.getParameter("disponibile") != null;
+
+    int annoMassimo = Year.now().getValue() + 1;
+
+    Object errore = request.getAttribute("errore");
 %>
 
 <!DOCTYPE html>
 <html>
+
 <head>
     <meta charset="UTF-8">
     <title>Inserisci Libro - Biblioteca Online</title>
 </head>
+
 <body>
 
     <h1>Inserisci nuovo libro</h1>
 
-    <% if (request.getAttribute("errore") != null) { %>
+    <% if (errore != null) { %>
+
         <p style="color: red;">
-            <%= request.getAttribute("errore") %>
+            <%= escapeHtml(errore) %>
         </p>
+
     <% } %>
 
-    <form action="inserisci-libro" method="post">
+    <form action="<%= contextPath %>/inserisci-libro"
+          method="post">
 
-        <label>Titolo:</label>
-        <input type="text" name="titolo" required>
+        <label for="titolo">Titolo:</label>
 
-        <br><br>
-
-        <label>Autore:</label>
-        <input type="text" name="autore" required>
-
-        <br><br>
-
-        <label>ISBN:</label>
-        <input type="text" name="isbn">
+        <input
+            type="text"
+            id="titolo"
+            name="titolo"
+            value="<%= escapeHtml(titolo) %>"
+            required
+        >
 
         <br><br>
 
-        <label>Anno pubblicazione:</label>
-        <input type="number" name="annoPubblicazione">
+        <label for="autore">Autore:</label>
+
+        <input
+            type="text"
+            id="autore"
+            name="autore"
+            value="<%= escapeHtml(autore) %>"
+            required
+        >
 
         <br><br>
 
-        <label>Genere:</label>
-        <input type="text" name="genere">
+        <label for="isbn">ISBN:</label>
+
+        <input
+            type="text"
+            id="isbn"
+            name="isbn"
+            value="<%= escapeHtml(isbn) %>"
+        >
 
         <br><br>
 
-        <label>Disponibile:</label>
-        <input type="checkbox"
-               name="disponibile"
-               value="true"
-               checked>
+        <label for="annoPubblicazione">
+            Anno pubblicazione:
+        </label>
+
+        <input
+            type="number"
+            id="annoPubblicazione"
+            name="annoPubblicazione"
+            min="1"
+            max="<%= annoMassimo %>"
+            value="<%= escapeHtml(annoPubblicazione) %>"
+        >
+
+        <br><br>
+
+        <label for="genere">Genere:</label>
+
+        <input
+            type="text"
+            id="genere"
+            name="genere"
+            value="<%= escapeHtml(genere) %>"
+        >
+
+        <br><br>
+
+        <label for="disponibile">Disponibile:</label>
+
+        <input
+            type="checkbox"
+            id="disponibile"
+            name="disponibile"
+            value="true"
+            <%= disponibileChecked ? "checked" : "" %>
+        >
 
         <br><br>
 
@@ -70,7 +152,9 @@
 
     <br>
 
-    <a href="home.jsp">Torna alla Home</a>
+    <a href="<%= contextPath %>/home.jsp">
+        Torna alla Home
+    </a>
 
 </body>
 </html>

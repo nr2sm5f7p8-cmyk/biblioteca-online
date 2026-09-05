@@ -2,6 +2,7 @@ package it.biblioteca.servlet;
 
 import java.io.IOException;
 import java.sql.SQLException;
+import java.time.Year;
 
 import it.biblioteca.dao.LibroDAO;
 import it.biblioteca.model.Libro;
@@ -20,56 +21,132 @@ public class InserisciLibroServlet extends HttpServlet {
     private final LibroDAO libroDAO = new LibroDAO();
 
     @Override
-    protected void doPost(HttpServletRequest request,
-                          HttpServletResponse response)
+    protected void doPost(
+            HttpServletRequest request,
+            HttpServletResponse response)
             throws ServletException, IOException {
 
-        HttpSession session = request.getSession(false);
+        request.setCharacterEncoding("UTF-8");
 
-        if (!utenteAutenticato(session)) {
-            response.sendRedirect("login.jsp");
+        HttpSession session = request.getSession(false);
+        Integer idUtente = recuperaIdUtente(session);
+
+        if (idUtente == null) {
+            response.sendRedirect(
+                    request.getContextPath() + "/login.jsp"
+            );
+            return;
+        }
+
+        String errore = validaInput(request);
+
+        if (errore != null) {
+            mostraErrore(request, response, errore);
             return;
         }
 
         try {
-            Libro libro = creaLibro(request, session);
-
-            if (libroDAO.inserisci(libro)) {
-                response.sendRedirect("libri");
-                return;
-            }
-
-            mostraErrore(request, response);
+            inserisciLibro(request, response, idUtente);
 
         } catch (SQLException e) {
-            throw new ServletException(
-                    "Errore durante l'inserimento del libro", e);
+
+            getServletContext().log(
+                    "Errore durante l'inserimento del libro",
+                    e
+            );
+
+            mostraErrore(
+                    request,
+                    response,
+                    "Si e verificato un errore durante l'inserimento."
+            );
         }
     }
 
-    private boolean utenteAutenticato(HttpSession session) {
+    private void inserisciLibro(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            int idUtente)
+            throws SQLException, IOException,
+                   ServletException {
 
-        return session != null
-                && Boolean.TRUE.equals(
-                        session.getAttribute("autenticato"));
+        Libro libro = creaLibro(request, idUtente);
+
+        if (!libroDAO.inserisci(libro)) {
+            mostraErrore(
+                    request,
+                    response,
+                    "Inserimento del libro non riuscito."
+            );
+            return;
+        }
+
+        response.sendRedirect(
+                request.getContextPath() + "/libri"
+        );
     }
 
-    private Libro creaLibro(HttpServletRequest request,
-                            HttpSession session) {
+    private String validaInput(HttpServletRequest request) {
 
         String titolo = request.getParameter("titolo");
         String autore = request.getParameter("autore");
-        String isbn = request.getParameter("isbn");
-        String genere = request.getParameter("genere");
+        String anno = request.getParameter("annoPubblicazione");
 
-        Integer anno = leggiAnno(
-                request.getParameter("annoPubblicazione"));
+        if (titolo == null || titolo.isBlank()) {
+            return "Il titolo e obbligatorio.";
+        }
+
+        if (autore == null || autore.isBlank()) {
+            return "L'autore e obbligatorio.";
+        }
+
+        return validaAnno(anno);
+    }
+
+    private String validaAnno(String valore) {
+
+        if (valore == null || valore.isBlank()) {
+            return null;
+        }
+
+        try {
+            int anno = Integer.parseInt(valore);
+            int annoMassimo = Year.now().getValue() + 1;
+
+            if (anno <= 0 || anno > annoMassimo) {
+                return "Anno di pubblicazione non valido.";
+            }
+
+        } catch (NumberFormatException e) {
+            return "L'anno di pubblicazione deve essere un numero.";
+        }
+
+        return null;
+    }
+
+    private Libro creaLibro(
+            HttpServletRequest request,
+            int idUtente) {
+
+        String titolo =
+                request.getParameter("titolo").trim();
+
+        String autore =
+                request.getParameter("autore").trim();
+
+        String isbn =
+                pulisci(request.getParameter("isbn"));
+
+        String genere =
+                pulisci(request.getParameter("genere"));
+
+        Integer anno =
+                leggiAnno(
+                        request.getParameter("annoPubblicazione")
+                );
 
         boolean disponibile =
                 request.getParameter("disponibile") != null;
-
-        int idUtente =
-                (int) session.getAttribute("utenteId");
 
         return new Libro(
                 titolo,
@@ -82,6 +159,24 @@ public class InserisciLibroServlet extends HttpServlet {
         );
     }
 
+    private Integer recuperaIdUtente(HttpSession session) {
+
+        if (session == null
+                || !Boolean.TRUE.equals(
+                        session.getAttribute("autenticato"))) {
+            return null;
+        }
+
+        Object valore =
+                session.getAttribute("utenteId");
+
+        if (valore instanceof Integer) {
+            return (Integer) valore;
+        }
+
+        return null;
+    }
+
     private Integer leggiAnno(String valore) {
 
         if (valore == null || valore.isBlank()) {
@@ -91,14 +186,22 @@ public class InserisciLibroServlet extends HttpServlet {
         return Integer.valueOf(valore);
     }
 
-    private void mostraErrore(HttpServletRequest request,
-                              HttpServletResponse response)
+    private String pulisci(String valore) {
+
+        if (valore == null || valore.isBlank()) {
+            return null;
+        }
+
+        return valore.trim();
+    }
+
+    private void mostraErrore(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            String messaggio)
             throws ServletException, IOException {
 
-        request.setAttribute(
-                "errore",
-                "Inserimento del libro non riuscito."
-        );
+        request.setAttribute("errore", messaggio);
 
         request.getRequestDispatcher("/inserisci_libro.jsp")
                .forward(request, response);
