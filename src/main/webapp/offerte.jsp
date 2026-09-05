@@ -32,17 +32,28 @@
         return;
     }
 
+    Object idUtenteObj =
+            session.getAttribute("utenteId");
+
+    int idUtenteCorrente =
+            idUtenteObj instanceof Integer
+            ? (Integer) idUtenteObj
+            : -1;
+
     @SuppressWarnings("unchecked")
     List<Libro> mieiLibri =
-            (List<Libro>) request.getAttribute("mieiLibri");
+            (List<Libro>)
+                    request.getAttribute("mieiLibri");
 
     @SuppressWarnings("unchecked")
     List<OffertaLibro> offerteAttive =
-            (List<OffertaLibro>) request.getAttribute("offerteAttive");
+            (List<OffertaLibro>)
+                    request.getAttribute("offerteAttive");
 
     @SuppressWarnings("unchecked")
     List<OffertaLibro> mieOfferte =
-            (List<OffertaLibro>) request.getAttribute("mieOfferte");
+            (List<OffertaLibro>)
+                    request.getAttribute("mieOfferte");
 
     String contextPath =
             request.getContextPath();
@@ -96,6 +107,14 @@
             color: red;
         }
 
+        .richiesta-form {
+            min-width: 260px;
+        }
+
+        .richiesta-form textarea {
+            width: 250px;
+        }
+
     </style>
 
 </head>
@@ -114,6 +133,12 @@
         I miei libri
     </a>
 
+    &nbsp;|&nbsp;
+
+    <a href="<%= contextPath %>/richieste">
+        Le mie richieste
+    </a>
+
     <br><br>
 
     <% if (errore != null) { %>
@@ -126,7 +151,8 @@
 
     <h2>Crea una nuova offerta</h2>
 
-    <% if (mieiLibri == null || mieiLibri.isEmpty()) { %>
+    <% if (mieiLibri == null
+            || mieiLibri.isEmpty()) { %>
 
         <p>
             Devi prima inserire almeno un libro.
@@ -161,9 +187,11 @@
                     <option
                         value="<%= libro.getIdLibro() %>">
 
-                        <%= escapeHtml(libro.getTitolo()) %>
+                        <%= escapeHtml(
+                                libro.getTitolo()) %>
                         -
-                        <%= escapeHtml(libro.getAutore()) %>
+                        <%= escapeHtml(
+                                libro.getAutore()) %>
 
                     </option>
 
@@ -188,7 +216,8 @@
 
                 <option
                     value="PRESTITO"
-                    <%= "PRESTITO".equals(tipoSelezionato)
+                    <%= "PRESTITO".equals(
+                            tipoSelezionato)
                             ? "selected"
                             : "" %>>
 
@@ -198,7 +227,8 @@
 
                 <option
                     value="SCAMBIO"
-                    <%= "SCAMBIO".equals(tipoSelezionato)
+                    <%= "SCAMBIO".equals(
+                            tipoSelezionato)
                             ? "selected"
                             : "" %>>
 
@@ -208,7 +238,8 @@
 
                 <option
                     value="ENTRAMBI"
-                    <%= "ENTRAMBI".equals(tipoSelezionato)
+                    <%= "ENTRAMBI".equals(
+                            tipoSelezionato)
                             ? "selected"
                             : "" %>>
 
@@ -247,7 +278,8 @@
 
     <h2>Offerte disponibili</h2>
 
-    <% if (offerteAttive == null || offerteAttive.isEmpty()) { %>
+    <% if (offerteAttive == null
+            || offerteAttive.isEmpty()) { %>
 
         <p>
             Non ci sono offerte attive.
@@ -266,13 +298,15 @@
                     <th>Nickname</th>
                     <th>Tipo</th>
                     <th>Condizioni</th>
+                    <th>Richiesta</th>
                 </tr>
 
             </thead>
 
             <tbody>
 
-                <% for (OffertaLibro offerta : offerteAttive) { %>
+                <% for (OffertaLibro offerta
+                        : offerteAttive) { %>
 
                     <tr>
 
@@ -306,6 +340,101 @@
                                     offerta.getCondizioni()) %>
                         </td>
 
+                        <td>
+
+                            <% if (offerta.getIdProprietario()
+                                    == idUtenteCorrente) { %>
+
+                                È una tua offerta.
+
+                            <% } else { %>
+
+                                <form
+                                    class="richiesta-form"
+                                    action="<%= contextPath %>/richieste"
+                                    method="post">
+
+                                    <input
+                                        type="hidden"
+                                        name="azione"
+                                        value="crea">
+
+                                    <input
+                                        type="hidden"
+                                        name="idOfferta"
+                                        value="<%= offerta.getIdOfferta() %>">
+
+                                    <% if ("ENTRAMBI".equals(
+                                            offerta.getTipoOfferta())) { %>
+
+                                        <label>
+                                            Tipo richiesta:
+                                        </label>
+
+                                        <br>
+
+                                        <select
+                                            name="tipoRichiesta"
+                                            required>
+
+                                            <option value="">
+                                                Seleziona
+                                            </option>
+
+                                            <option value="PRESTITO">
+                                                Prestito
+                                            </option>
+
+                                            <option value="SCAMBIO">
+                                                Scambio
+                                            </option>
+
+                                        </select>
+
+                                    <% } else { %>
+
+                                        <input
+                                            type="hidden"
+                                            name="tipoRichiesta"
+                                            value="<%= escapeHtml(
+                                                    offerta.getTipoOfferta()) %>">
+
+                                        <strong>
+                                            <%= "PRESTITO".equals(
+                                                    offerta.getTipoOfferta())
+                                                    ? "Prestito"
+                                                    : "Scambio" %>
+                                        </strong>
+
+                                    <% } %>
+
+                                    <br><br>
+
+                                    <label>
+                                        Modalità proposta:
+                                    </label>
+
+                                    <br>
+
+                                    <textarea
+                                        name="messaggioModalita"
+                                        maxlength="1000"
+                                        rows="4"
+                                        required
+                                        placeholder="Spiega come vorresti organizzare il prestito o lo scambio"></textarea>
+
+                                    <br><br>
+
+                                    <button type="submit">
+                                        Invia richiesta
+                                    </button>
+
+                                </form>
+
+                            <% } %>
+
+                        </td>
+
                     </tr>
 
                 <% } %>
@@ -318,7 +447,8 @@
 
     <h2>Le mie offerte</h2>
 
-    <% if (mieOfferte == null || mieOfferte.isEmpty()) { %>
+    <% if (mieOfferte == null
+            || mieOfferte.isEmpty()) { %>
 
         <p>
             Non hai ancora pubblicato offerte.
@@ -342,7 +472,8 @@
 
             <tbody>
 
-                <% for (OffertaLibro offerta : mieOfferte) { %>
+                <% for (OffertaLibro offerta
+                        : mieOfferte) { %>
 
                     <tr>
 
