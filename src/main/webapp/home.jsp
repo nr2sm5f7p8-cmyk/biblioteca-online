@@ -1,19 +1,50 @@
 <%@ page language="java"
     contentType="text/html; charset=UTF-8"
-    pageEncoding="UTF-8"%>
+    pageEncoding="UTF-8" %>
+
+<%!
+    private String escapeHtml(Object valore) {
+
+        if (valore == null) {
+            return "";
+        }
+
+        return String.valueOf(valore)
+                .replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+                .replace("\"", "&quot;")
+                .replace("'", "&#39;");
+    }
+%>
 
 <%
-    Object autenticato = session.getAttribute("autenticato");
+    if (!Boolean.TRUE.equals(
+            session.getAttribute("autenticato"))) {
 
-    if (autenticato == null || !(Boolean) autenticato) {
-        response.sendRedirect("login.jsp");
+        response.sendRedirect(
+                request.getContextPath() + "/login.jsp"
+        );
         return;
     }
 
-    String nome = (String) session.getAttribute("nome");
-    String cognome = (String) session.getAttribute("cognome");
-    String username = (String) session.getAttribute("username");
-    Integer idRuolo = (Integer) session.getAttribute("idRuolo");
+    String nome =
+            (String) session.getAttribute("nome");
+
+    String cognome =
+            (String) session.getAttribute("cognome");
+
+    String username =
+            (String) session.getAttribute("username");
+
+    Object valoreRuolo =
+            session.getAttribute("idRuolo");
+
+    Integer idRuolo = null;
+
+    if (valoreRuolo instanceof Integer) {
+        idRuolo = (Integer) valoreRuolo;
+    }
 
     String ruolo = "SCONOSCIUTO";
 
@@ -29,6 +60,9 @@
             ruolo = "SERVIZIO TECNICO";
         }
     }
+
+    String contextPath =
+            request.getContextPath();
 %>
 
 <!DOCTYPE html>
@@ -44,77 +78,80 @@
     <h1>Biblioteca Online</h1>
 
     <h2>
-        Benvenuto <%= nome %> <%= cognome %>
+        Benvenuto
+        <%= escapeHtml(nome) %>
+        <%= escapeHtml(cognome) %>
     </h2>
 
     <p>
         Username:
-        <strong><%= username %></strong>
+        <strong>
+            <%= escapeHtml(username) %>
+        </strong>
     </p>
 
     <p>
         Ruolo:
-        <strong><%= ruolo %></strong>
+        <strong>
+            <%= escapeHtml(ruolo) %>
+        </strong>
     </p>
 
     <hr>
 
     <h2>Menu</h2>
 
-    <a href="libri">
-        <button type="button">
+    <p>
+        <a href="<%= contextPath %>/libri">
             Visualizza libri
-        </button>
-    </a>
+        </a>
+    </p>
 
-    <br><br>
-
-    <a href="inserisci_libro.jsp">
-        <button type="button">
+    <p>
+        <a href="<%= contextPath %>/inserisci_libro.jsp">
             Inserisci nuovo libro
-        </button>
-    </a>
+        </a>
+    </p>
 
-    <br><br>
-
-    <a href="chat.jsp">
-    	<button type="button">
-        	Chat
-    	</button>
-	</a>
+    <p>
+        <a href="<%= contextPath %>/chat.jsp">
+            Chat
+        </a>
+    </p>
 
     <% if (idRuolo != null && idRuolo == 1) { %>
 
-        <br><br>
+        <hr>
 
         <h3>Funzioni amministratore</h3>
 
-        <a href="admin/">
-            <button type="button">
+        <p>
+            <a href="<%= contextPath %>/admin/">
                 Area Amministratore
-            </button>
-        </a>
+            </a>
+        </p>
 
     <% } %>
 
     <% if (idRuolo != null && idRuolo == 3) { %>
 
-        <br><br>
+        <hr>
 
         <h3>Area Servizio Tecnico</h3>
 
-        <a href="tecnico/">
-            <button type="button">
+        <p>
+            <a href="<%= contextPath %>/tecnico/">
                 Area Tecnica
-            </button>
-        </a>
+            </a>
+        </p>
 
     <% } %>
 
     <hr>
 
-    <a href="logout">Logout</a>
+    <a href="<%= contextPath %>/logout">
+        Logout
+    </a>
 
 </body>
-
 </html>

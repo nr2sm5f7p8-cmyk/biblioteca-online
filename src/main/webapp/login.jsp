@@ -1,32 +1,90 @@
 <%@ page language="java"
     contentType="text/html; charset=UTF-8"
-    pageEncoding="UTF-8"%>
+    pageEncoding="UTF-8" %>
+
+<%!
+    private String escapeHtml(Object valore) {
+
+        if (valore == null) {
+            return "";
+        }
+
+        return String.valueOf(valore)
+                .replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+                .replace("\"", "&quot;")
+                .replace("'", "&#39;");
+    }
+%>
+
+<%
+    if (Boolean.TRUE.equals(
+            session.getAttribute("autenticato"))) {
+
+        response.sendRedirect(
+                request.getContextPath() + "/home.jsp"
+        );
+        return;
+    }
+
+    String contextPath = request.getContextPath();
+
+    String username = request.getParameter("username");
+
+    Object errore = request.getAttribute("errore");
+%>
 
 <!DOCTYPE html>
 <html>
+
 <head>
     <meta charset="UTF-8">
     <title>Login - Biblioteca Online</title>
 </head>
+
 <body>
 
     <h1>Login</h1>
 
-    <% if (request.getAttribute("errore") != null) { %>
+    <% if (errore != null) { %>
+
         <p style="color: red;">
-            <%= request.getAttribute("errore") %>
+            <%= escapeHtml(errore) %>
         </p>
+
     <% } %>
 
-    <form action="login" method="post">
+    <form
+        action="<%= contextPath %>/login"
+        method="post">
 
-        <label>Username:</label>
-        <input type="text" name="username" required>
+        <label for="username">
+            Username:
+        </label>
+
+        <input
+            type="text"
+            id="username"
+            name="username"
+            value="<%= escapeHtml(username) %>"
+            autocomplete="username"
+            required
+        >
 
         <br><br>
 
-        <label>Password:</label>
-        <input type="password" name="password" required>
+        <label for="password">
+            Password:
+        </label>
+
+        <input
+            type="password"
+            id="password"
+            name="password"
+            autocomplete="current-password"
+            required
+        >
 
         <br><br>
 
@@ -38,7 +96,7 @@
 
     <br>
 
-    <a href="registrazione.jsp">
+    <a href="<%= contextPath %>/registrazione.jsp">
         Non hai un account? Registrati
     </a>
 
