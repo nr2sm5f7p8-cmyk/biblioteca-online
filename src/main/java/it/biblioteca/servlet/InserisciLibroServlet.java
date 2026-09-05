@@ -70,8 +70,7 @@ public class InserisciLibroServlet extends HttpServlet {
             HttpServletRequest request,
             HttpServletResponse response,
             int idUtente)
-            throws SQLException, IOException,
-                   ServletException {
+            throws SQLException, IOException, ServletException {
 
         Libro libro = creaLibro(request, idUtente);
 
@@ -92,8 +91,8 @@ public class InserisciLibroServlet extends HttpServlet {
 
         String titolo = request.getParameter("titolo");
         String autore = request.getParameter("autore");
-        String anno =
-                request.getParameter("annoPubblicazione");
+        String anno = request.getParameter("annoPubblicazione");
+        String descrizione = request.getParameter("descrizione");
 
         if (titolo == null || titolo.isBlank()) {
             return "Il titolo e obbligatorio.";
@@ -101,6 +100,10 @@ public class InserisciLibroServlet extends HttpServlet {
 
         if (autore == null || autore.isBlank()) {
             return "L'autore e obbligatorio.";
+        }
+
+        if (descrizione != null && descrizione.length() > 1000) {
+            return "La descrizione non puo superare 1000 caratteri.";
         }
 
         return validaAnno(anno);
@@ -119,6 +122,7 @@ public class InserisciLibroServlet extends HttpServlet {
             if (anno <= 0 || anno > massimo) {
                 return "Anno di pubblicazione non valido.";
             }
+
         } catch (NumberFormatException e) {
             return "L'anno di pubblicazione deve essere un numero.";
         }
@@ -130,27 +134,47 @@ public class InserisciLibroServlet extends HttpServlet {
             HttpServletRequest request,
             int idUtente) {
 
-        String titolo =
-                request.getParameter("titolo").trim();
-        String autore =
-                request.getParameter("autore").trim();
-        String isbn =
-                pulisci(request.getParameter("isbn"));
-        String genere =
-                pulisci(request.getParameter("genere"));
-        Integer anno = leggiAnno(
-                request.getParameter("annoPubblicazione"));
-        boolean disponibile =
-                request.getParameter("disponibile") != null;
+        Libro libro = new Libro();
 
-        return new Libro(
-                titolo,
-                autore,
-                isbn,
-                anno,
-                genere,
-                disponibile,
-                idUtente);
+        impostaDatiPrincipali(libro, request);
+        impostaDatiAggiuntivi(libro, request, idUtente);
+
+        return libro;
+    }
+
+    private void impostaDatiPrincipali(
+            Libro libro,
+            HttpServletRequest request) {
+
+        libro.setTitolo(
+                request.getParameter("titolo").trim());
+
+        libro.setAutore(
+                request.getParameter("autore").trim());
+
+        libro.setIsbn(
+                pulisci(request.getParameter("isbn")));
+
+        libro.setAnnoPubblicazione(
+                leggiAnno(
+                        request.getParameter("annoPubblicazione")));
+    }
+
+    private void impostaDatiAggiuntivi(
+            Libro libro,
+            HttpServletRequest request,
+            int idUtente) {
+
+        libro.setGenere(
+                pulisci(request.getParameter("genere")));
+
+        libro.setDescrizione(
+                pulisci(request.getParameter("descrizione")));
+
+        libro.setDisponibile(
+                request.getParameter("disponibile") != null);
+
+        libro.setIdUtenteInserimento(idUtente);
     }
 
     private Integer recuperaIdUtente(

@@ -40,7 +40,8 @@ public class ListaLibriServlet extends HttpServlet {
             throws ServletException, IOException {
 
         try {
-            List<Libro> libri = libroDAO.trovaTutti();
+            List<Libro> libri = cercaLibri(request);
+
             request.setAttribute("libri", libri);
 
             request.getRequestDispatcher(
@@ -52,8 +53,28 @@ public class ListaLibriServlet extends HttpServlet {
         }
     }
 
+    private List<Libro> cercaLibri(
+            HttpServletRequest request)
+            throws SQLException {
+
+        String titolo =
+                request.getParameter("titolo");
+
+        String autore =
+                request.getParameter("autore");
+
+        String genere =
+                request.getParameter("genere");
+
+        return libroDAO.cerca(
+                titolo,
+                autore,
+                genere);
+    }
+
     private void gestisciErroreDatabase(
-            SQLException e) throws ServletException {
+            SQLException e)
+            throws ServletException {
 
         getServletContext().log(
                 "Errore durante il caricamento dei libri",

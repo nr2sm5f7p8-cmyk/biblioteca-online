@@ -35,27 +35,63 @@
     List<Libro> libri =
             (List<Libro>) request.getAttribute("libri");
 
-    String contextPath = request.getContextPath();
+    String contextPath =
+            request.getContextPath();
+
+    String filtroTitolo =
+            request.getParameter("titolo");
+
+    String filtroAutore =
+            request.getParameter("autore");
+
+    String filtroGenere =
+            request.getParameter("genere");
 %>
 
 <!DOCTYPE html>
-<html>
+<html lang="it">
 
 <head>
+
     <meta charset="UTF-8">
-    <title>Lista Libri - Biblioteca Online</title>
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0">
+
+    <title>
+        Lista Libri - Biblioteca Online
+    </title>
 
     <style>
+
         table {
             border-collapse: collapse;
+            width: 100%;
         }
 
         th,
         td {
             border: 1px solid black;
             padding: 8px;
+            vertical-align: top;
         }
+
+        .filtri {
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+
+        .filtri input {
+            margin-right: 10px;
+        }
+
+        .descrizione {
+            max-width: 350px;
+        }
+
     </style>
+
 </head>
 
 <body>
@@ -68,15 +104,76 @@
 
     <br><br>
 
+    <div class="filtri">
+
+        <h2>Ricerca libri</h2>
+
+        <form
+            action="<%= contextPath %>/libri"
+            method="get">
+
+            <label for="titolo">
+                Titolo:
+            </label>
+
+            <input
+                type="text"
+                id="titolo"
+                name="titolo"
+                value="<%= escapeHtml(filtroTitolo) %>"
+                placeholder="Cerca per titolo">
+
+            <label for="autore">
+                Autore:
+            </label>
+
+            <input
+                type="text"
+                id="autore"
+                name="autore"
+                value="<%= escapeHtml(filtroAutore) %>"
+                placeholder="Cerca per autore">
+
+            <label for="genere">
+                Genere:
+            </label>
+
+            <input
+                type="text"
+                id="genere"
+                name="genere"
+                value="<%= escapeHtml(filtroGenere) %>"
+                placeholder="Cerca per genere">
+
+            <button type="submit">
+                Cerca
+            </button>
+
+            <a href="<%= contextPath %>/libri">
+                Azzera filtri
+            </a>
+
+        </form>
+
+    </div>
+
     <% if (libri == null || libri.isEmpty()) { %>
 
-        <p>Nessun libro presente.</p>
+        <p>
+            Nessun libro trovato.
+        </p>
 
     <% } else { %>
+
+        <p>
+            Libri trovati:
+            <strong><%= libri.size() %></strong>
+        </p>
 
         <table>
 
             <thead>
+
                 <tr>
                     <th>ID</th>
                     <th>Titolo</th>
@@ -84,9 +181,11 @@
                     <th>ISBN</th>
                     <th>Anno</th>
                     <th>Genere</th>
+                    <th>Descrizione</th>
                     <th>Disponibile</th>
                     <th>Azioni</th>
                 </tr>
+
             </thead>
 
             <tbody>
@@ -100,25 +199,33 @@
                         </td>
 
                         <td>
-                            <%= escapeHtml(libro.getTitolo()) %>
-                        </td>
-
-                        <td>
-                            <%= escapeHtml(libro.getAutore()) %>
-                        </td>
-
-                        <td>
-                            <%= escapeHtml(libro.getIsbn()) %>
+                            <%= escapeHtml(
+                                    libro.getTitolo()) %>
                         </td>
 
                         <td>
                             <%= escapeHtml(
-                                    libro.getAnnoPubblicazione()
-                               ) %>
+                                    libro.getAutore()) %>
                         </td>
 
                         <td>
-                            <%= escapeHtml(libro.getGenere()) %>
+                            <%= escapeHtml(
+                                    libro.getIsbn()) %>
+                        </td>
+
+                        <td>
+                            <%= escapeHtml(
+                                    libro.getAnnoPubblicazione()) %>
+                        </td>
+
+                        <td>
+                            <%= escapeHtml(
+                                    libro.getGenere()) %>
+                        </td>
+
+                        <td class="descrizione">
+                            <%= escapeHtml(
+                                    libro.getDescrizione()) %>
                         </td>
 
                         <td>
@@ -128,9 +235,11 @@
                         </td>
 
                         <td>
+
                             <a href="<%= contextPath %>/modifica-libro?id=<%= libro.getIdLibro() %>">
                                 Modifica
                             </a>
+
                         </td>
 
                     </tr>
@@ -144,4 +253,5 @@
     <% } %>
 
 </body>
+
 </html>

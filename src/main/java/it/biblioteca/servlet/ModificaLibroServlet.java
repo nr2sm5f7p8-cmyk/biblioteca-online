@@ -31,8 +31,8 @@ public class ModificaLibroServlet extends HttpServlet {
             return;
         }
 
-        Integer idLibro = leggiIdLibro(
-                request.getParameter("id"));
+        Integer idLibro =
+                leggiIdLibro(request.getParameter("id"));
 
         if (idLibro == null) {
             vaiAllaLista(request, response);
@@ -62,6 +62,7 @@ public class ModificaLibroServlet extends HttpServlet {
             getServletContext().log(
                     "Errore durante il caricamento del libro",
                     e);
+
             vaiAllaLista(request, response);
         }
     }
@@ -144,8 +145,8 @@ public class ModificaLibroServlet extends HttpServlet {
     private String validaInput(
             HttpServletRequest request) {
 
-        Integer idLibro = leggiIdLibro(
-                request.getParameter("idLibro"));
+        Integer idLibro =
+                leggiIdLibro(request.getParameter("idLibro"));
 
         if (idLibro == null) {
             return "Libro non valido.";
@@ -153,8 +154,24 @@ public class ModificaLibroServlet extends HttpServlet {
 
         String titolo = request.getParameter("titolo");
         String autore = request.getParameter("autore");
-        String anno =
-                request.getParameter("annoPubblicazione");
+        String descrizione =
+                request.getParameter("descrizione");
+
+        String errore =
+                validaCampi(titolo, autore, descrizione);
+
+        if (errore != null) {
+            return errore;
+        }
+
+        return validaAnno(
+                request.getParameter("annoPubblicazione"));
+    }
+
+    private String validaCampi(
+            String titolo,
+            String autore,
+            String descrizione) {
 
         if (titolo == null || titolo.isBlank()) {
             return "Il titolo e obbligatorio.";
@@ -164,7 +181,13 @@ public class ModificaLibroServlet extends HttpServlet {
             return "L'autore e obbligatorio.";
         }
 
-        return validaAnno(anno);
+        if (descrizione != null
+                && descrizione.length() > 1000) {
+
+            return "La descrizione non puo superare 1000 caratteri.";
+        }
+
+        return null;
     }
 
     private String validaAnno(String valore) {
@@ -215,6 +238,10 @@ public class ModificaLibroServlet extends HttpServlet {
 
         libro.setIsbn(
                 pulisci(request.getParameter("isbn")));
+
+        libro.setAnnoPubblicazione(
+                leggiAnno(
+                        request.getParameter("annoPubblicazione")));
     }
 
     private void impostaDatiAggiuntivi(
@@ -224,9 +251,8 @@ public class ModificaLibroServlet extends HttpServlet {
         libro.setGenere(
                 pulisci(request.getParameter("genere")));
 
-        libro.setAnnoPubblicazione(
-                leggiAnno(
-                        request.getParameter("annoPubblicazione")));
+        libro.setDescrizione(
+                pulisci(request.getParameter("descrizione")));
 
         libro.setDisponibile(
                 request.getParameter("disponibile") != null);
@@ -240,7 +266,10 @@ public class ModificaLibroServlet extends HttpServlet {
 
         try {
             int id = Integer.parseInt(valore);
-            return id > 0 ? id : null;
+
+            return id > 0
+                    ? id
+                    : null;
 
         } catch (NumberFormatException e) {
             return null;
@@ -284,8 +313,8 @@ public class ModificaLibroServlet extends HttpServlet {
 
         request.setAttribute("errore", messaggio);
 
-        Integer idLibro = leggiIdLibro(
-                request.getParameter("idLibro"));
+        Integer idLibro =
+                leggiIdLibro(request.getParameter("idLibro"));
 
         recuperaLibroPerErrore(request, idLibro);
 
@@ -303,7 +332,9 @@ public class ModificaLibroServlet extends HttpServlet {
         }
 
         try {
-            Libro libro = libroDAO.trovaPerId(idLibro);
+            Libro libro =
+                    libroDAO.trovaPerId(idLibro);
+
             request.setAttribute("libro", libro);
 
         } catch (SQLException e) {

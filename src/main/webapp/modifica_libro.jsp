@@ -63,12 +63,19 @@
             ? request.getParameter("genere")
             : libro.getGenere();
 
+    String descrizione = post
+            ? request.getParameter("descrizione")
+            : libro.getDescrizione();
+
     String annoPubblicazione;
 
     if (post) {
+
         annoPubblicazione =
                 request.getParameter("annoPubblicazione");
+
     } else {
+
         annoPubblicazione =
                 libro.getAnnoPubblicazione() != null
                 ? String.valueOf(libro.getAnnoPubblicazione())
@@ -79,17 +86,28 @@
             ? request.getParameter("disponibile") != null
             : libro.isDisponibile();
 
-    int annoMassimo = Year.now().getValue() + 1;
+    int annoMassimo =
+            Year.now().getValue() + 1;
 
-    Object errore = request.getAttribute("errore");
+    Object errore =
+            request.getAttribute("errore");
 %>
 
 <!DOCTYPE html>
-<html>
+<html lang="it">
 
 <head>
+
     <meta charset="UTF-8">
-    <title>Modifica Libro - Biblioteca Online</title>
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0">
+
+    <title>
+        Modifica Libro - Biblioteca Online
+    </title>
+
 </head>
 
 <body>
@@ -104,14 +122,14 @@
 
     <% } %>
 
-    <form action="<%= contextPath %>/modifica-libro"
-          method="post">
+    <form
+        action="<%= contextPath %>/modifica-libro"
+        method="post">
 
         <input
             type="hidden"
             name="idLibro"
-            value="<%= libro.getIdLibro() %>"
-        >
+            value="<%= libro.getIdLibro() %>">
 
         <label for="titolo">
             Titolo:
@@ -122,8 +140,8 @@
             id="titolo"
             name="titolo"
             value="<%= escapeHtml(titolo) %>"
-            required
-        >
+            maxlength="255"
+            required>
 
         <br><br>
 
@@ -136,8 +154,8 @@
             id="autore"
             name="autore"
             value="<%= escapeHtml(autore) %>"
-            required
-        >
+            maxlength="255"
+            required>
 
         <br><br>
 
@@ -150,7 +168,7 @@
             id="isbn"
             name="isbn"
             value="<%= escapeHtml(isbn) %>"
-        >
+            maxlength="20">
 
         <br><br>
 
@@ -164,8 +182,7 @@
             name="annoPubblicazione"
             min="1"
             max="<%= annoMassimo %>"
-            value="<%= escapeHtml(annoPubblicazione) %>"
-        >
+            value="<%= escapeHtml(annoPubblicazione) %>">
 
         <br><br>
 
@@ -178,9 +195,26 @@
             id="genere"
             name="genere"
             value="<%= escapeHtml(genere) %>"
-        >
+            maxlength="100">
 
         <br><br>
+
+        <label for="descrizione">
+            Descrizione:
+        </label>
+
+        <br>
+
+        <textarea
+            id="descrizione"
+            name="descrizione"
+            maxlength="1000"
+            rows="6"
+            cols="50"><%= escapeHtml(descrizione) %></textarea>
+
+        <p>
+            Massimo 1000 caratteri.
+        </p>
 
         <label for="disponibile">
             Disponibile:
@@ -191,8 +225,7 @@
             id="disponibile"
             name="disponibile"
             value="true"
-            <%= disponibileChecked ? "checked" : "" %>
-        >
+            <%= disponibileChecked ? "checked" : "" %>>
 
         <br><br>
 

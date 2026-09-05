@@ -8,21 +8,49 @@ public class Libro {
     private String isbn;
     private Integer annoPubblicazione;
     private String genere;
+    private String descrizione;
     private boolean disponibile;
     private int idUtenteInserimento;
 
     public Libro() {
     }
 
-    public Libro(String titolo, String autore, String isbn,
-                 Integer annoPubblicazione, String genere,
-                 boolean disponibile, int idUtenteInserimento) {
+    public Libro(
+            String titolo,
+            String autore,
+            String isbn,
+            Integer annoPubblicazione,
+            String genere,
+            boolean disponibile,
+            int idUtenteInserimento) {
+
+        this(
+                titolo,
+                autore,
+                isbn,
+                annoPubblicazione,
+                genere,
+                null,
+                disponibile,
+                idUtenteInserimento);
+    }
+
+    public Libro(
+            String titolo,
+            String autore,
+            String isbn,
+            Integer annoPubblicazione,
+            String genere,
+            String descrizione,
+            boolean disponibile,
+            int idUtenteInserimento) {
 
         this.titolo = titolo;
         this.autore = autore;
         this.isbn = isbn;
         this.annoPubblicazione = annoPubblicazione;
         this.genere = genere;
+        this.descrizione = descrizione;
         this.disponibile = disponibile;
         this.idUtenteInserimento = idUtenteInserimento;
     }
@@ -63,7 +91,9 @@ public class Libro {
         return annoPubblicazione;
     }
 
-    public void setAnnoPubblicazione(Integer annoPubblicazione) {
+    public void setAnnoPubblicazione(
+            Integer annoPubblicazione) {
+
         this.annoPubblicazione = annoPubblicazione;
     }
 
@@ -73,6 +103,14 @@ public class Libro {
 
     public void setGenere(String genere) {
         this.genere = genere;
+    }
+
+    public String getDescrizione() {
+        return descrizione;
+    }
+
+    public void setDescrizione(String descrizione) {
+        this.descrizione = descrizione;
     }
 
     public boolean isDisponibile() {
@@ -87,7 +125,10 @@ public class Libro {
         return idUtenteInserimento;
     }
 
-    public void setIdUtenteInserimento(int idUtenteInserimento) {
-        this.idUtenteInserimento = idUtenteInserimento;
+    public void setIdUtenteInserimento(
+            int idUtenteInserimento) {
+
+        this.idUtenteInserimento =
+                idUtenteInserimento;
     }
 }
