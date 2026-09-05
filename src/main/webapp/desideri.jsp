@@ -37,15 +37,6 @@
 
     String contextPath =
             request.getContextPath();
-
-    String filtroTitolo =
-            request.getParameter("titolo");
-
-    String filtroAutore =
-            request.getParameter("autore");
-
-    String filtroGenere =
-            request.getParameter("genere");
 %>
 
 <!DOCTYPE html>
@@ -60,7 +51,7 @@
         content="width=device-width, initial-scale=1.0">
 
     <title>
-        Lista Libri - Biblioteca Online
+        Lista desideri - Biblioteca Online
     </title>
 
     <style>
@@ -77,15 +68,6 @@
             vertical-align: top;
         }
 
-        .filtri {
-            margin-top: 20px;
-            margin-bottom: 20px;
-        }
-
-        .filtri input {
-            margin-right: 10px;
-        }
-
         .descrizione {
             max-width: 350px;
         }
@@ -96,7 +78,12 @@
 
 <body>
 
-    <h1>Lista Libri</h1>
+    <h1>Lista desideri</h1>
+
+    <p>
+        Qui trovi i libri che hai aggiunto
+        alla tua lista dei desideri.
+    </p>
 
     <a href="<%= contextPath %>/home.jsp">
         Torna alla Home
@@ -104,75 +91,22 @@
 
     &nbsp;|&nbsp;
 
-    <a href="<%= contextPath %>/desideri">
-        La mia lista desideri
+    <a href="<%= contextPath %>/libri">
+        Cerca libri
     </a>
 
     <br><br>
 
-    <div class="filtri">
-
-        <h2>Ricerca libri</h2>
-
-        <form
-            action="<%= contextPath %>/libri"
-            method="get">
-
-            <label for="titolo">
-                Titolo:
-            </label>
-
-            <input
-                type="text"
-                id="titolo"
-                name="titolo"
-                value="<%= escapeHtml(filtroTitolo) %>"
-                placeholder="Cerca per titolo">
-
-            <label for="autore">
-                Autore:
-            </label>
-
-            <input
-                type="text"
-                id="autore"
-                name="autore"
-                value="<%= escapeHtml(filtroAutore) %>"
-                placeholder="Cerca per autore">
-
-            <label for="genere">
-                Genere:
-            </label>
-
-            <input
-                type="text"
-                id="genere"
-                name="genere"
-                value="<%= escapeHtml(filtroGenere) %>"
-                placeholder="Cerca per genere">
-
-            <button type="submit">
-                Cerca
-            </button>
-
-            <a href="<%= contextPath %>/libri">
-                Azzera filtri
-            </a>
-
-        </form>
-
-    </div>
-
     <% if (libri == null || libri.isEmpty()) { %>
 
         <p>
-            Nessun libro trovato.
+            La tua lista desideri è vuota.
         </p>
 
     <% } else { %>
 
         <p>
-            Libri trovati:
+            Libri desiderati:
             <strong><%= libri.size() %></strong>
         </p>
 
@@ -181,7 +115,6 @@
             <thead>
 
                 <tr>
-                    <th>ID</th>
                     <th>Titolo</th>
                     <th>Autore</th>
                     <th>ISBN</th>
@@ -199,10 +132,6 @@
                 <% for (Libro libro : libri) { %>
 
                     <tr>
-
-                        <td>
-                            <%= libro.getIdLibro() %>
-                        </td>
 
                         <td>
                             <%= escapeHtml(
@@ -242,12 +171,6 @@
 
                         <td>
 
-                            <a href="<%= contextPath %>/modifica-libro?id=<%= libro.getIdLibro() %>">
-                                Modifica
-                            </a>
-
-                            <br><br>
-
                             <form
                                 action="<%= contextPath %>/desideri"
                                 method="post">
@@ -260,10 +183,10 @@
                                 <input
                                     type="hidden"
                                     name="azione"
-                                    value="aggiungi">
+                                    value="rimuovi">
 
                                 <button type="submit">
-                                    Aggiungi ai desideri
+                                    Rimuovi
                                 </button>
 
                             </form>
