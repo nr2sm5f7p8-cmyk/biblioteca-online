@@ -66,10 +66,15 @@
 %>
 
 <!DOCTYPE html>
-<html>
+<html lang="it">
 
 <head>
     <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0">
+
     <title>Home - Biblioteca Online</title>
 </head>
 
@@ -100,6 +105,12 @@
     <hr>
 
     <h2>Menu</h2>
+
+    <p>
+        <a href="<%= contextPath %>/profilo">
+            Il mio profilo
+        </a>
+    </p>
 
     <p>
         <a href="<%= contextPath %>/libri">
