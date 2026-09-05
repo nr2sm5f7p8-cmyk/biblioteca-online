@@ -53,6 +53,7 @@
         response.sendRedirect(
                 request.getContextPath() + "/login.jsp"
         );
+
         return;
     }
 
@@ -111,6 +112,10 @@
             margin-bottom: 5px;
         }
 
+        textarea {
+            max-width: 100%;
+        }
+
     </style>
 
 </head>
@@ -129,6 +134,12 @@
         Vedi offerte
     </a>
 
+    &nbsp;|&nbsp;
+
+    <a href="<%= contextPath %>/recensioni">
+        Recensioni ricevute
+    </a>
+
     <br><br>
 
     <% if (errore != null) { %>
@@ -138,6 +149,7 @@
         </p>
 
     <% } %>
+
 
     <h2>Richieste ricevute</h2>
 
@@ -155,14 +167,23 @@
             <thead>
 
                 <tr>
+
                     <th>Libro</th>
+
                     <th>Autore</th>
+
                     <th>Richiedente</th>
+
                     <th>Nickname</th>
+
                     <th>Tipo</th>
+
                     <th>Modalità proposta</th>
+
                     <th>Stato</th>
+
                     <th>Azioni</th>
+
                 </tr>
 
             </thead>
@@ -175,39 +196,53 @@
                     <tr>
 
                         <td>
+
                             <%= escapeHtml(
                                     richiesta.getTitoloLibro()) %>
+
                         </td>
 
                         <td>
+
                             <%= escapeHtml(
                                     richiesta.getAutoreLibro()) %>
+
                         </td>
 
                         <td>
+
                             <%= escapeHtml(
                                     richiesta.getNomeRichiedente()) %>
+
                         </td>
 
                         <td>
+
                             <%= escapeHtml(
                                     richiesta.getUsernameRichiedente()) %>
+
                         </td>
 
                         <td>
+
                             <%= escapeHtml(
                                     richiesta.getTipoRichiesta()) %>
+
                         </td>
 
                         <td>
+
                             <%= escapeHtml(
                                     richiesta.getMessaggioModalita()) %>
+
                         </td>
 
                         <td>
+
                             <%= escapeHtml(
                                     statoLeggibile(
                                             richiesta.getStato())) %>
+
                         </td>
 
                         <td>
@@ -278,6 +313,60 @@
 
                                 </form>
 
+                            <% } else if ("COMPLETATA".equals(
+                                    richiesta.getStato())) { %>
+
+                                <form
+                                    action="<%= contextPath %>/recensioni"
+                                    method="post">
+
+                                    <input
+                                        type="hidden"
+                                        name="idRichiesta"
+                                        value="<%= richiesta.getIdRichiesta() %>">
+
+                                    <label>
+                                        Voto:
+                                    </label>
+
+                                    <select
+                                        name="voto"
+                                        required>
+
+                                        <option value="">
+                                            Seleziona
+                                        </option>
+
+                                        <option value="1">1</option>
+                                        <option value="2">2</option>
+                                        <option value="3">3</option>
+                                        <option value="4">4</option>
+                                        <option value="5">5</option>
+
+                                    </select>
+
+                                    <br><br>
+
+                                    <label>
+                                        Commento facoltativo:
+                                    </label>
+
+                                    <br>
+
+                                    <textarea
+                                        name="testo"
+                                        maxlength="1000"
+                                        rows="3"
+                                        cols="30"></textarea>
+
+                                    <br>
+
+                                    <button type="submit">
+                                        Lascia recensione
+                                    </button>
+
+                                </form>
+
                             <% } else { %>
 
                                 Nessuna azione
@@ -296,6 +385,7 @@
 
     <% } %>
 
+
     <h2>Richieste inviate</h2>
 
     <% if (richiesteInviate == null
@@ -312,13 +402,21 @@
             <thead>
 
                 <tr>
+
                     <th>Libro</th>
+
                     <th>Autore</th>
+
                     <th>Proprietario</th>
+
                     <th>Tipo</th>
+
                     <th>Modalità proposta</th>
+
                     <th>Stato</th>
+
                     <th>Azioni</th>
+
                 </tr>
 
             </thead>
@@ -331,34 +429,46 @@
                     <tr>
 
                         <td>
+
                             <%= escapeHtml(
                                     richiesta.getTitoloLibro()) %>
+
                         </td>
 
                         <td>
+
                             <%= escapeHtml(
                                     richiesta.getAutoreLibro()) %>
+
                         </td>
 
                         <td>
+
                             <%= escapeHtml(
                                     richiesta.getUsernameProprietario()) %>
+
                         </td>
 
                         <td>
+
                             <%= escapeHtml(
                                     richiesta.getTipoRichiesta()) %>
+
                         </td>
 
                         <td>
+
                             <%= escapeHtml(
                                     richiesta.getMessaggioModalita()) %>
+
                         </td>
 
                         <td>
+
                             <%= escapeHtml(
                                     statoLeggibile(
                                             richiesta.getStato())) %>
+
                         </td>
 
                         <td>
@@ -405,6 +515,60 @@
 
                                     <button type="submit">
                                         Segna come completata
+                                    </button>
+
+                                </form>
+
+                            <% } else if ("COMPLETATA".equals(
+                                    richiesta.getStato())) { %>
+
+                                <form
+                                    action="<%= contextPath %>/recensioni"
+                                    method="post">
+
+                                    <input
+                                        type="hidden"
+                                        name="idRichiesta"
+                                        value="<%= richiesta.getIdRichiesta() %>">
+
+                                    <label>
+                                        Voto:
+                                    </label>
+
+                                    <select
+                                        name="voto"
+                                        required>
+
+                                        <option value="">
+                                            Seleziona
+                                        </option>
+
+                                        <option value="1">1</option>
+                                        <option value="2">2</option>
+                                        <option value="3">3</option>
+                                        <option value="4">4</option>
+                                        <option value="5">5</option>
+
+                                    </select>
+
+                                    <br><br>
+
+                                    <label>
+                                        Commento facoltativo:
+                                    </label>
+
+                                    <br>
+
+                                    <textarea
+                                        name="testo"
+                                        maxlength="1000"
+                                        rows="3"
+                                        cols="30"></textarea>
+
+                                    <br>
+
+                                    <button type="submit">
+                                        Lascia recensione
                                     </button>
 
                                 </form>
