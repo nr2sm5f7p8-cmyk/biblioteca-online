@@ -1,0 +1,26 @@
+# Maven
+target/
+
+# Eclipse
+.classpath
+.project
+.settings/
+
+# IntelliJ
+.idea/
+*.iml
+
+# VS Code
+.vscode/
+
+# File locali / segreti
+.env
+*.env
+application-local.properties
+
+# Log
+*.log
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
