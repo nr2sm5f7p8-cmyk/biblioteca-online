@@ -7,16 +7,23 @@ public class Utente {
     private String cognome;
     private String username;
     private String email;
+    private String telefono;
     private String passwordHash;
     private int idRuolo;
+    private Integer idComunita;
+    private String generiPreferiti;
     private boolean attivo;
 
     public Utente() {
     }
 
-    public Utente(String nome, String cognome,
-                  String username, String email,
-                  String passwordHash, int idRuolo) {
+    public Utente(
+            String nome,
+            String cognome,
+            String username,
+            String email,
+            String passwordHash,
+            int idRuolo) {
 
         this.nome = nome;
         this.cognome = cognome;
@@ -25,6 +32,23 @@ public class Utente {
         this.passwordHash = passwordHash;
         this.idRuolo = idRuolo;
         this.attivo = true;
+    }
+
+    public Utente(
+            String nome,
+            String cognome,
+            String username,
+            String email,
+            String telefono,
+            String passwordHash,
+            int idRuolo,
+            Integer idComunita,
+            String generiPreferiti) {
+
+        this(nome, cognome, username, email, passwordHash, idRuolo);
+        this.telefono = telefono;
+        this.idComunita = idComunita;
+        this.generiPreferiti = generiPreferiti;
     }
 
     public int getIdUtente() {
@@ -67,6 +91,14 @@ public class Utente {
         this.email = email;
     }
 
+    public String getTelefono() {
+        return telefono;
+    }
+
+    public void setTelefono(String telefono) {
+        this.telefono = telefono;
+    }
+
     public String getPasswordHash() {
         return passwordHash;
     }
@@ -81,6 +113,22 @@ public class Utente {
 
     public void setIdRuolo(int idRuolo) {
         this.idRuolo = idRuolo;
+    }
+
+    public Integer getIdComunita() {
+        return idComunita;
+    }
+
+    public void setIdComunita(Integer idComunita) {
+        this.idComunita = idComunita;
+    }
+
+    public String getGeneriPreferiti() {
+        return generiPreferiti;
+    }
+
+    public void setGeneriPreferiti(String generiPreferiti) {
+        this.generiPreferiti = generiPreferiti;
     }
 
     public boolean isAttivo() {
