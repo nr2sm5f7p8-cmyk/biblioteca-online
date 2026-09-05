@@ -26,47 +26,41 @@ public class VerificaOtpServlet extends HttpServlet {
             throws ServletException, IOException {
 
         request.setCharacterEncoding("UTF-8");
-
-        HttpSession session =
-                request.getSession(false);
-
-        Integer idUtente =
-                recuperaIdUtente(session);
+        HttpSession session = request.getSession(false);
+        Integer idUtente = recuperaIdUtente(session);
 
         if (idUtente == null) {
             vaiAlLogin(request, response);
             return;
         }
 
-        String otp =
-                request.getParameter("otp");
+        String otp = request.getParameter("otp");
 
         if (!otpValido(otp)) {
             mostraErrore(request, response);
             return;
         }
 
-        try {
+        eseguiVerifica(request, response, session, idUtente, otp);
+    }
 
+    private void eseguiVerifica(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            HttpSession session,
+            int idUtente,
+            String otp)
+            throws ServletException, IOException {
+
+        try {
             verificaECompletaLogin(
                     request,
                     response,
                     session,
                     idUtente,
-                    otp
-            );
-
+                    otp);
         } catch (SQLException e) {
-
-            getServletContext().log(
-                    "Errore durante la verifica OTP",
-                    e
-            );
-
-            mostraErroreSistema(
-                    request,
-                    response
-            );
+            gestisciErroreSistema(request, response, e);
         }
     }
 
@@ -76,33 +70,33 @@ public class VerificaOtpServlet extends HttpServlet {
             HttpSession session,
             int idUtente,
             String otp)
-            throws SQLException,
-                   ServletException,
-                   IOException {
+            throws SQLException, ServletException, IOException {
 
         if (!utenteDAO.verificaOtp(idUtente, otp)) {
             mostraErrore(request, response);
             return;
         }
 
-        Utente utente =
-                utenteDAO.trovaPerId(idUtente);
+        Utente utente = utenteDAO.trovaPerId(idUtente);
 
         if (utente == null) {
             vaiAlLogin(request, response);
             return;
         }
 
-        utenteDAO.cancellaOtp(idUtente);
+        finalizzaAutenticazione(request, session, utente);
+        vaiAllaHome(request, response);
+    }
 
+    private void finalizzaAutenticazione(
+            HttpServletRequest request,
+            HttpSession session,
+            Utente utente)
+            throws SQLException {
+
+        utenteDAO.cancellaOtp(utente.getIdUtente());
         request.changeSessionId();
-
         completaLogin(session, utente);
-
-        response.sendRedirect(
-                request.getContextPath()
-                + "/home.jsp"
-        );
     }
 
     private Integer recuperaIdUtente(
@@ -112,8 +106,7 @@ public class VerificaOtpServlet extends HttpServlet {
             return null;
         }
 
-        Object valore =
-                session.getAttribute("utenteOtpId");
+        Object valore = session.getAttribute("utenteOtpId");
 
         if (valore instanceof Integer) {
             return (Integer) valore;
@@ -123,7 +116,6 @@ public class VerificaOtpServlet extends HttpServlet {
     }
 
     private boolean otpValido(String otp) {
-
         return otp != null
                 && otp.matches("\\d{6}");
     }
@@ -133,36 +125,25 @@ public class VerificaOtpServlet extends HttpServlet {
             Utente utente) {
 
         session.removeAttribute("utenteOtpId");
+        session.setAttribute("autenticato", true);
+        session.setAttribute("utenteId", utente.getIdUtente());
+        session.setAttribute("nome", utente.getNome());
+        session.setAttribute("cognome", utente.getCognome());
+        session.setAttribute("username", utente.getUsername());
+        session.setAttribute("idRuolo", utente.getIdRuolo());
+    }
 
-        session.setAttribute(
-                "autenticato",
-                true
-        );
+    private void gestisciErroreSistema(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            SQLException e)
+            throws ServletException, IOException {
 
-        session.setAttribute(
-                "utenteId",
-                utente.getIdUtente()
-        );
+        getServletContext().log(
+                "Errore durante la verifica OTP",
+                e);
 
-        session.setAttribute(
-                "nome",
-                utente.getNome()
-        );
-
-        session.setAttribute(
-                "cognome",
-                utente.getCognome()
-        );
-
-        session.setAttribute(
-                "username",
-                utente.getUsername()
-        );
-
-        session.setAttribute(
-                "idRuolo",
-                utente.getIdRuolo()
-        );
+        mostraErroreSistema(request, response);
     }
 
     private void mostraErrore(
@@ -170,13 +151,10 @@ public class VerificaOtpServlet extends HttpServlet {
             HttpServletResponse response)
             throws ServletException, IOException {
 
-        request.setAttribute(
-                "errore",
-                "Codice OTP errato o scaduto."
-        );
-
-        request.getRequestDispatcher("/otp.jsp")
-               .forward(request, response);
+        mostraPaginaOtp(
+                request,
+                response,
+                "Codice OTP errato o scaduto.");
     }
 
     private void mostraErroreSistema(
@@ -184,13 +162,22 @@ public class VerificaOtpServlet extends HttpServlet {
             HttpServletResponse response)
             throws ServletException, IOException {
 
-        request.setAttribute(
-                "errore",
-                "Si e verificato un errore. Riprova piu tardi."
-        );
+        mostraPaginaOtp(
+                request,
+                response,
+                "Si e verificato un errore. Riprova piu tardi.");
+    }
+
+    private void mostraPaginaOtp(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            String messaggio)
+            throws ServletException, IOException {
+
+        request.setAttribute("errore", messaggio);
 
         request.getRequestDispatcher("/otp.jsp")
-               .forward(request, response);
+                .forward(request, response);
     }
 
     private void vaiAlLogin(
@@ -199,8 +186,15 @@ public class VerificaOtpServlet extends HttpServlet {
             throws IOException {
 
         response.sendRedirect(
-                request.getContextPath()
-                + "/login.jsp"
-        );
+                request.getContextPath() + "/login.jsp");
+    }
+
+    private void vaiAllaHome(
+            HttpServletRequest request,
+            HttpServletResponse response)
+            throws IOException {
+
+        response.sendRedirect(
+                request.getContextPath() + "/home.jsp");
     }
 }

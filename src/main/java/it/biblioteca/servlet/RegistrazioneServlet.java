@@ -22,81 +22,108 @@ public class RegistrazioneServlet extends HttpServlet {
     private final UtenteDAO utenteDAO = new UtenteDAO();
 
     @Override
-    protected void doPost(HttpServletRequest request,
-                          HttpServletResponse response)
+    protected void doPost(
+            HttpServletRequest request,
+            HttpServletResponse response)
             throws ServletException, IOException {
 
         request.setCharacterEncoding("UTF-8");
 
-        String erroreValidazione = validaInput(request);
+        String errore = validaInput(request);
 
-        if (erroreValidazione != null) {
-            mostraErrore(request, response, erroreValidazione);
+        if (errore != null) {
+            mostraErrore(request, response, errore);
             return;
         }
 
         try {
             registraUtente(request, response);
         } catch (SQLException e) {
-            getServletContext().log(
-                    "Errore durante la registrazione dell'utente", e
-            );
-
-            mostraErrore(
-                    request,
-                    response,
-                    "Si e verificato un errore durante la registrazione."
-            );
+            gestisciErroreRegistrazione(request, response, e);
         }
     }
 
-    private void registraUtente(HttpServletRequest request,
-                                HttpServletResponse response)
+    private void registraUtente(
+            HttpServletRequest request,
+            HttpServletResponse response)
             throws SQLException, ServletException, IOException {
 
-        String username = request.getParameter("username").trim();
-        String email = request.getParameter("email").trim();
+        String username = parametroPulito(request, "username");
+        String email = parametroPulito(request, "email");
 
         if (utenteDAO.esisteUsernameOEmail(username, email)) {
             mostraErrore(
                     request,
                     response,
-                    "Username o email gia utilizzati."
-            );
+                    "Username o email gia utilizzati.");
             return;
         }
+
+        salvaUtente(request, response);
+    }
+
+    private void salvaUtente(
+            HttpServletRequest request,
+            HttpServletResponse response)
+            throws SQLException, ServletException, IOException {
 
         Utente utente = creaUtente(request);
         boolean inserito = utenteDAO.inserisci(utente);
 
+        impostaEsitoRegistrazione(request, inserito);
+
+        request.getRequestDispatcher(
+                "/registrazione.jsp")
+                .forward(request, response);
+    }
+
+    private void impostaEsitoRegistrazione(
+            HttpServletRequest request,
+            boolean inserito) {
+
         if (inserito) {
             request.setAttribute(
                     "messaggio",
-                    "Registrazione completata con successo!"
-            );
-        } else {
-            request.setAttribute(
-                    "errore",
-                    "Registrazione non riuscita."
-            );
+                    "Registrazione completata con successo!");
+            return;
         }
 
-        request.getRequestDispatcher("/registrazione.jsp")
-               .forward(request, response);
+        request.setAttribute(
+                "errore",
+                "Registrazione non riuscita.");
     }
 
-    private void mostraErrore(HttpServletRequest request,
-                              HttpServletResponse response,
-                              String messaggio)
+    private void gestisciErroreRegistrazione(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            SQLException e)
+            throws ServletException, IOException {
+
+        getServletContext().log(
+                "Errore durante la registrazione dell'utente",
+                e);
+
+        mostraErrore(
+                request,
+                response,
+                "Si e verificato un errore durante la registrazione.");
+    }
+
+    private void mostraErrore(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            String messaggio)
             throws ServletException, IOException {
 
         request.setAttribute("errore", messaggio);
 
-        request.getRequestDispatcher("/registrazione.jsp")
-               .forward(request, response);
+        request.getRequestDispatcher(
+                "/registrazione.jsp")
+                .forward(request, response);
     }
 
-    private String validaInput(HttpServletRequest request) {
+    private String validaInput(
+            HttpServletRequest request) {
 
         String nome = request.getParameter("nome");
         String cognome = request.getParameter("cognome");
@@ -104,46 +131,65 @@ public class RegistrazioneServlet extends HttpServlet {
         String email = request.getParameter("email");
         String password = request.getParameter("password");
 
-        if (nome == null || nome.isBlank()
-                || cognome == null || cognome.isBlank()
-                || username == null || username.isBlank()
-                || email == null || email.isBlank()
-                || password == null || password.isBlank()) {
-
+        if (campoVuoto(nome)
+                || campoVuoto(cognome)
+                || campoVuoto(username)
+                || campoVuoto(email)
+                || campoVuoto(password)) {
             return "Tutti i campi sono obbligatori.";
         }
 
-        if (!email.matches("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$")) {
+        if (!emailValida(email)) {
             return "Inserisci un indirizzo email valido.";
         }
 
-        if (password.length() < 8 || password.length() > 72) {
+        return validaPassword(password);
+    }
+
+    private boolean campoVuoto(String valore) {
+        return valore == null || valore.isBlank();
+    }
+
+    private boolean emailValida(String email) {
+        return email.matches(
+                "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$");
+    }
+
+    private String validaPassword(String password) {
+
+        if (password.length() < 8
+                || password.length() > 72) {
             return "La password deve contenere da 8 a 72 caratteri.";
         }
 
         return null;
     }
 
-    private Utente creaUtente(HttpServletRequest request) {
+    private Utente creaUtente(
+            HttpServletRequest request) {
 
-        String nome = request.getParameter("nome").trim();
-        String cognome = request.getParameter("cognome").trim();
-        String username = request.getParameter("username").trim();
-        String email = request.getParameter("email").trim();
         String password = request.getParameter("password");
-
-        String passwordHash = BCrypt.hashpw(
-                password,
-                BCrypt.gensalt()
-        );
+        String hash = creaHashPassword(password);
 
         return new Utente(
-                nome,
-                cognome,
-                username,
-                email,
-                passwordHash,
-                RUOLO_UTENTE
-        );
+                parametroPulito(request, "nome"),
+                parametroPulito(request, "cognome"),
+                parametroPulito(request, "username"),
+                parametroPulito(request, "email"),
+                hash,
+                RUOLO_UTENTE);
+    }
+
+    private String creaHashPassword(String password) {
+        return BCrypt.hashpw(
+                password,
+                BCrypt.gensalt());
+    }
+
+    private String parametroPulito(
+            HttpServletRequest request,
+            String nomeParametro) {
+
+        return request.getParameter(nomeParametro).trim();
     }
 }

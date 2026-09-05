@@ -29,12 +29,9 @@ public class UtenteDAO {
             + "LIMIT 1";
 
     public boolean inserisci(Utente utente) throws SQLException {
-
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(INSERT_UTENTE)) {
-
             impostaParametriInserimento(ps, utente);
-
             return ps.executeUpdate() == 1;
         }
     }
@@ -42,7 +39,6 @@ public class UtenteDAO {
     private void impostaParametriInserimento(
             PreparedStatement ps,
             Utente utente) throws SQLException {
-
         ps.setString(1, utente.getNome());
         ps.setString(2, utente.getCognome());
         ps.setString(3, utente.getUsername());
@@ -55,14 +51,11 @@ public class UtenteDAO {
     public boolean esisteUsernameOEmail(
             String username,
             String email) throws SQLException {
-
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement ps =
                      conn.prepareStatement(SELECT_USERNAME_EMAIL)) {
-
             ps.setString(1, username);
             ps.setString(2, email);
-
             try (ResultSet rs = ps.executeQuery()) {
                 return rs.next();
             }
@@ -71,13 +64,10 @@ public class UtenteDAO {
 
     public Utente trovaPerUsername(String username)
             throws SQLException {
-
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement ps =
                      conn.prepareStatement(SELECT_USERNAME)) {
-
             ps.setString(1, username);
-
             try (ResultSet rs = ps.executeQuery()) {
                 return rs.next() ? creaUtente(rs) : null;
             }
@@ -86,16 +76,13 @@ public class UtenteDAO {
 
     public Utente trovaPerId(int idUtente)
             throws SQLException {
-
         String sql =
                 "SELECT * FROM utenti "
                 + "WHERE id_utente = ? AND attivo = TRUE";
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
-
             ps.setInt(1, idUtente);
-
             try (ResultSet rs = ps.executeQuery()) {
                 return rs.next() ? creaUtente(rs) : null;
             }
@@ -104,9 +91,7 @@ public class UtenteDAO {
 
     private Utente creaUtente(ResultSet rs)
             throws SQLException {
-
         Utente utente = new Utente();
-
         utente.setIdUtente(rs.getInt("id_utente"));
         utente.setNome(rs.getString("nome"));
         utente.setCognome(rs.getString("cognome"));
@@ -115,7 +100,6 @@ public class UtenteDAO {
         utente.setPasswordHash(rs.getString("password_hash"));
         utente.setIdRuolo(rs.getInt("id_ruolo"));
         utente.setAttivo(rs.getBoolean("attivo"));
-
         return utente;
     }
 
@@ -123,7 +107,6 @@ public class UtenteDAO {
             int idUtente,
             String otpHash,
             LocalDateTime scadenza) throws SQLException {
-
         String sql =
                 "UPDATE utenti "
                 + "SET otp_hash = ?, otp_scadenza = ? "
@@ -131,14 +114,9 @@ public class UtenteDAO {
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
-
             ps.setString(1, otpHash);
-            ps.setTimestamp(
-                    2,
-                    Timestamp.valueOf(scadenza)
-            );
+            ps.setTimestamp(2, Timestamp.valueOf(scadenza));
             ps.setInt(3, idUtente);
-
             ps.executeUpdate();
         }
     }
@@ -146,48 +124,48 @@ public class UtenteDAO {
     public boolean verificaOtp(
             int idUtente,
             String otp) throws SQLException {
-
         String sql =
                 "SELECT otp_hash, otp_scadenza "
-                + "FROM utenti "
-                + "WHERE id_utente = ?";
+                + "FROM utenti WHERE id_utente = ?";
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
-
             ps.setInt(1, idUtente);
-
             try (ResultSet rs = ps.executeQuery()) {
-
                 if (!rs.next()) {
                     return false;
                 }
-
-                String hash =
-                        rs.getString("otp_hash");
-
-                Timestamp scadenza =
-                        rs.getTimestamp("otp_scadenza");
-
-                if (hash == null || scadenza == null) {
-                    return false;
-                }
-
-                if (scadenza.before(
-                        new Timestamp(
-                                System.currentTimeMillis()
-                        ))) {
-                    return false;
-                }
-
-                return BCrypt.checkpw(otp, hash);
+                return otpValido(rs, otp);
             }
         }
     }
 
+    private boolean otpValido(
+            ResultSet rs,
+            String otp) throws SQLException {
+        String hash = rs.getString("otp_hash");
+        Timestamp scadenza = rs.getTimestamp("otp_scadenza");
+
+        if (hash == null || scadenza == null) {
+            return false;
+        }
+
+        if (otpScaduto(scadenza)) {
+            return false;
+        }
+
+        return BCrypt.checkpw(otp, hash);
+    }
+
+    private boolean otpScaduto(Timestamp scadenza) {
+        Timestamp adesso =
+                new Timestamp(System.currentTimeMillis());
+
+        return scadenza.before(adesso);
+    }
+
     public void cancellaOtp(int idUtente)
             throws SQLException {
-
         String sql =
                 "UPDATE utenti "
                 + "SET otp_hash = NULL, otp_scadenza = NULL "
@@ -195,9 +173,7 @@ public class UtenteDAO {
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
-
             ps.setInt(1, idUtente);
-
             ps.executeUpdate();
         }
     }

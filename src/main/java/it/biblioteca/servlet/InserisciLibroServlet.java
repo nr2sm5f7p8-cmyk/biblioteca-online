@@ -28,13 +28,11 @@ public class InserisciLibroServlet extends HttpServlet {
 
         request.setCharacterEncoding("UTF-8");
 
-        HttpSession session = request.getSession(false);
-        Integer idUtente = recuperaIdUtente(session);
+        Integer idUtente =
+                recuperaIdUtente(request.getSession(false));
 
         if (idUtente == null) {
-            response.sendRedirect(
-                    request.getContextPath() + "/login.jsp"
-            );
+            vaiAlLogin(request, response);
             return;
         }
 
@@ -45,21 +43,26 @@ public class InserisciLibroServlet extends HttpServlet {
             return;
         }
 
+        eseguiInserimento(request, response, idUtente);
+    }
+
+    private void eseguiInserimento(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            int idUtente)
+            throws ServletException, IOException {
+
         try {
             inserisciLibro(request, response, idUtente);
-
         } catch (SQLException e) {
-
             getServletContext().log(
                     "Errore durante l'inserimento del libro",
-                    e
-            );
+                    e);
 
             mostraErrore(
                     request,
                     response,
-                    "Si e verificato un errore durante l'inserimento."
-            );
+                    "Si e verificato un errore durante l'inserimento.");
         }
     }
 
@@ -76,21 +79,21 @@ public class InserisciLibroServlet extends HttpServlet {
             mostraErrore(
                     request,
                     response,
-                    "Inserimento del libro non riuscito."
-            );
+                    "Inserimento del libro non riuscito.");
             return;
         }
 
         response.sendRedirect(
-                request.getContextPath() + "/libri"
-        );
+                request.getContextPath() + "/libri");
     }
 
-    private String validaInput(HttpServletRequest request) {
+    private String validaInput(
+            HttpServletRequest request) {
 
         String titolo = request.getParameter("titolo");
         String autore = request.getParameter("autore");
-        String anno = request.getParameter("annoPubblicazione");
+        String anno =
+                request.getParameter("annoPubblicazione");
 
         if (titolo == null || titolo.isBlank()) {
             return "Il titolo e obbligatorio.";
@@ -111,12 +114,11 @@ public class InserisciLibroServlet extends HttpServlet {
 
         try {
             int anno = Integer.parseInt(valore);
-            int annoMassimo = Year.now().getValue() + 1;
+            int massimo = Year.now().getValue() + 1;
 
-            if (anno <= 0 || anno > annoMassimo) {
+            if (anno <= 0 || anno > massimo) {
                 return "Anno di pubblicazione non valido.";
             }
-
         } catch (NumberFormatException e) {
             return "L'anno di pubblicazione deve essere un numero.";
         }
@@ -130,21 +132,14 @@ public class InserisciLibroServlet extends HttpServlet {
 
         String titolo =
                 request.getParameter("titolo").trim();
-
         String autore =
                 request.getParameter("autore").trim();
-
         String isbn =
                 pulisci(request.getParameter("isbn"));
-
         String genere =
                 pulisci(request.getParameter("genere"));
-
-        Integer anno =
-                leggiAnno(
-                        request.getParameter("annoPubblicazione")
-                );
-
+        Integer anno = leggiAnno(
+                request.getParameter("annoPubblicazione"));
         boolean disponibile =
                 request.getParameter("disponibile") != null;
 
@@ -155,26 +150,26 @@ public class InserisciLibroServlet extends HttpServlet {
                 anno,
                 genere,
                 disponibile,
-                idUtente
-        );
+                idUtente);
     }
 
-    private Integer recuperaIdUtente(HttpSession session) {
+    private Integer recuperaIdUtente(
+            HttpSession session) {
 
-        if (session == null
-                || !Boolean.TRUE.equals(
-                        session.getAttribute("autenticato"))) {
+        if (session == null) {
             return null;
         }
 
-        Object valore =
-                session.getAttribute("utenteId");
-
-        if (valore instanceof Integer) {
-            return (Integer) valore;
+        if (!Boolean.TRUE.equals(
+                session.getAttribute("autenticato"))) {
+            return null;
         }
 
-        return null;
+        Object valore = session.getAttribute("utenteId");
+
+        return valore instanceof Integer
+                ? (Integer) valore
+                : null;
     }
 
     private Integer leggiAnno(String valore) {
@@ -195,6 +190,15 @@ public class InserisciLibroServlet extends HttpServlet {
         return valore.trim();
     }
 
+    private void vaiAlLogin(
+            HttpServletRequest request,
+            HttpServletResponse response)
+            throws IOException {
+
+        response.sendRedirect(
+                request.getContextPath() + "/login.jsp");
+    }
+
     private void mostraErrore(
             HttpServletRequest request,
             HttpServletResponse response,
@@ -203,7 +207,8 @@ public class InserisciLibroServlet extends HttpServlet {
 
         request.setAttribute("errore", messaggio);
 
-        request.getRequestDispatcher("/inserisci_libro.jsp")
-               .forward(request, response);
+        request.getRequestDispatcher(
+                "/inserisci_libro.jsp")
+                .forward(request, response);
     }
 }

@@ -28,29 +28,19 @@ public class RoleFilter implements Filter {
             FilterChain chain)
             throws IOException, ServletException {
 
-        HttpServletRequest httpRequest =
-                (HttpServletRequest) request;
-
-        HttpServletResponse httpResponse =
-                (HttpServletResponse) response;
-
-        HttpSession session =
-                httpRequest.getSession(false);
+        HttpServletRequest req = (HttpServletRequest) request;
+        HttpServletResponse res = (HttpServletResponse) response;
+        HttpSession session = req.getSession(false);
 
         if (!sessioneAutenticata(session)) {
-            httpResponse.sendRedirect(
-                    httpRequest.getContextPath() + "/login.jsp"
-            );
+            redirect(req, res, "/login.jsp");
             return;
         }
 
-        Integer idRuolo = recuperaRuolo(session);
-        String uri = httpRequest.getRequestURI();
+        Integer ruolo = recuperaRuolo(session);
 
-        if (!ruoloAutorizzato(uri, idRuolo)) {
-            httpResponse.sendRedirect(
-                    httpRequest.getContextPath() + "/home.jsp"
-            );
+        if (!ruoloAutorizzato(req.getRequestURI(), ruolo)) {
+            redirect(req, res, "/home.jsp");
             return;
         }
 
@@ -58,17 +48,13 @@ public class RoleFilter implements Filter {
     }
 
     private boolean sessioneAutenticata(HttpSession session) {
-
         return session != null
                 && Boolean.TRUE.equals(
-                        session.getAttribute("autenticato")
-                );
+                        session.getAttribute("autenticato"));
     }
 
     private Integer recuperaRuolo(HttpSession session) {
-
-        Object valore =
-                session.getAttribute("idRuolo");
+        Object valore = session.getAttribute("idRuolo");
 
         if (valore instanceof Integer) {
             return (Integer) valore;
@@ -94,5 +80,14 @@ public class RoleFilter implements Filter {
         }
 
         return false;
+    }
+
+    private void redirect(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            String pagina) throws IOException {
+
+        response.sendRedirect(
+                request.getContextPath() + pagina);
     }
 }

@@ -32,13 +32,21 @@ public class ModificaLibroServlet extends HttpServlet {
         }
 
         Integer idLibro = leggiIdLibro(
-                request.getParameter("id")
-        );
+                request.getParameter("id"));
 
         if (idLibro == null) {
             vaiAllaLista(request, response);
             return;
         }
+
+        caricaPaginaModifica(request, response, idLibro);
+    }
+
+    private void caricaPaginaModifica(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            int idLibro)
+            throws ServletException, IOException {
 
         try {
             Libro libro = libroDAO.trovaPerId(idLibro);
@@ -48,20 +56,27 @@ public class ModificaLibroServlet extends HttpServlet {
                 return;
             }
 
-            request.setAttribute("libro", libro);
-
-            request.getRequestDispatcher("/modifica_libro.jsp")
-                   .forward(request, response);
+            mostraPaginaModifica(request, response, libro);
 
         } catch (SQLException e) {
-
             getServletContext().log(
                     "Errore durante il caricamento del libro",
-                    e
-            );
-
+                    e);
             vaiAllaLista(request, response);
         }
+    }
+
+    private void mostraPaginaModifica(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            Libro libro)
+            throws ServletException, IOException {
+
+        request.setAttribute("libro", libro);
+
+        request.getRequestDispatcher(
+                "/modifica_libro.jsp")
+                .forward(request, response);
     }
 
     @Override
@@ -84,47 +99,62 @@ public class ModificaLibroServlet extends HttpServlet {
             return;
         }
 
+        eseguiModifica(request, response);
+    }
+
+    private void eseguiModifica(
+            HttpServletRequest request,
+            HttpServletResponse response)
+            throws ServletException, IOException {
+
         try {
             Libro libro = creaLibroDaForm(request);
 
-            boolean aggiornato = libroDAO.aggiorna(libro);
-
-            if (!aggiornato) {
+            if (!libroDAO.aggiorna(libro)) {
                 mostraErrore(
                         request,
                         response,
-                        "Modifica del libro non riuscita."
-                );
+                        "Modifica del libro non riuscita.");
                 return;
             }
 
             vaiAllaLista(request, response);
 
         } catch (SQLException e) {
-
-            getServletContext().log(
-                    "Errore durante la modifica del libro",
-                    e
-            );
-
-            mostraErrore(
-                    request,
-                    response,
-                    "Si e verificato un errore durante la modifica."
-            );
+            gestisciErroreModifica(request, response, e);
         }
     }
 
-    private String validaInput(HttpServletRequest request) {
+    private void gestisciErroreModifica(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            SQLException e)
+            throws ServletException, IOException {
 
-        if (leggiIdLibro(
-                request.getParameter("idLibro")) == null) {
+        getServletContext().log(
+                "Errore durante la modifica del libro",
+                e);
+
+        mostraErrore(
+                request,
+                response,
+                "Si e verificato un errore durante la modifica.");
+    }
+
+    private String validaInput(
+            HttpServletRequest request) {
+
+        Integer idLibro = leggiIdLibro(
+                request.getParameter("idLibro"));
+
+        if (idLibro == null) {
             return "Libro non valido.";
         }
 
         String titolo = request.getParameter("titolo");
         String autore = request.getParameter("autore");
-        String anno = request.getParameter("annoPubblicazione");
+        String anno =
+                request.getParameter("annoPubblicazione");
 
         if (titolo == null || titolo.isBlank()) {
             return "Il titolo e obbligatorio.";
@@ -165,37 +195,41 @@ public class ModificaLibroServlet extends HttpServlet {
 
         libro.setIdLibro(
                 Integer.parseInt(
-                        request.getParameter("idLibro")
-                )
-        );
+                        request.getParameter("idLibro")));
+
+        impostaDatiPrincipali(libro, request);
+        impostaDatiAggiuntivi(libro, request);
+
+        return libro;
+    }
+
+    private void impostaDatiPrincipali(
+            Libro libro,
+            HttpServletRequest request) {
 
         libro.setTitolo(
-                request.getParameter("titolo").trim()
-        );
+                request.getParameter("titolo").trim());
 
         libro.setAutore(
-                request.getParameter("autore").trim()
-        );
+                request.getParameter("autore").trim());
 
         libro.setIsbn(
-                pulisci(request.getParameter("isbn"))
-        );
+                pulisci(request.getParameter("isbn")));
+    }
+
+    private void impostaDatiAggiuntivi(
+            Libro libro,
+            HttpServletRequest request) {
 
         libro.setGenere(
-                pulisci(request.getParameter("genere"))
-        );
+                pulisci(request.getParameter("genere")));
 
         libro.setAnnoPubblicazione(
                 leggiAnno(
-                        request.getParameter("annoPubblicazione")
-                )
-        );
+                        request.getParameter("annoPubblicazione")));
 
         libro.setDisponibile(
-                request.getParameter("disponibile") != null
-        );
-
-        return libro;
+                request.getParameter("disponibile") != null);
     }
 
     private Integer leggiIdLibro(String valore) {
@@ -239,8 +273,7 @@ public class ModificaLibroServlet extends HttpServlet {
 
         return session != null
                 && Boolean.TRUE.equals(
-                        session.getAttribute("autenticato")
-                );
+                        session.getAttribute("autenticato"));
     }
 
     private void mostraErrore(
@@ -252,23 +285,32 @@ public class ModificaLibroServlet extends HttpServlet {
         request.setAttribute("errore", messaggio);
 
         Integer idLibro = leggiIdLibro(
-                request.getParameter("idLibro")
-        );
+                request.getParameter("idLibro"));
 
-        if (idLibro != null) {
-            try {
-                Libro libro = libroDAO.trovaPerId(idLibro);
-                request.setAttribute("libro", libro);
-            } catch (SQLException e) {
-                getServletContext().log(
-                        "Errore durante il recupero del libro",
-                        e
-                );
-            }
+        recuperaLibroPerErrore(request, idLibro);
+
+        request.getRequestDispatcher(
+                "/modifica_libro.jsp")
+                .forward(request, response);
+    }
+
+    private void recuperaLibroPerErrore(
+            HttpServletRequest request,
+            Integer idLibro) {
+
+        if (idLibro == null) {
+            return;
         }
 
-        request.getRequestDispatcher("/modifica_libro.jsp")
-               .forward(request, response);
+        try {
+            Libro libro = libroDAO.trovaPerId(idLibro);
+            request.setAttribute("libro", libro);
+
+        } catch (SQLException e) {
+            getServletContext().log(
+                    "Errore durante il recupero del libro",
+                    e);
+        }
     }
 
     private void vaiAlLogin(
@@ -277,8 +319,7 @@ public class ModificaLibroServlet extends HttpServlet {
             throws IOException {
 
         response.sendRedirect(
-                request.getContextPath() + "/login.jsp"
-        );
+                request.getContextPath() + "/login.jsp");
     }
 
     private void vaiAllaLista(
@@ -287,7 +328,6 @@ public class ModificaLibroServlet extends HttpServlet {
             throws IOException {
 
         response.sendRedirect(
-                request.getContextPath() + "/libri"
-        );
+                request.getContextPath() + "/libri");
     }
 }

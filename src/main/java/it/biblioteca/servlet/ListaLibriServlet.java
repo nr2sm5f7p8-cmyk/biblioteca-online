@@ -27,31 +27,41 @@ public class ListaLibriServlet extends HttpServlet {
             throws ServletException, IOException {
 
         if (!utenteAutenticato(request)) {
-            response.sendRedirect(
-                    request.getContextPath() + "/login.jsp"
-            );
+            vaiAlLogin(request, response);
             return;
         }
 
+        caricaLibri(request, response);
+    }
+
+    private void caricaLibri(
+            HttpServletRequest request,
+            HttpServletResponse response)
+            throws ServletException, IOException {
+
         try {
             List<Libro> libri = libroDAO.trovaTutti();
-
             request.setAttribute("libri", libri);
 
-            request.getRequestDispatcher("/lista_libri.jsp")
-                   .forward(request, response);
+            request.getRequestDispatcher(
+                    "/lista_libri.jsp")
+                    .forward(request, response);
 
         } catch (SQLException e) {
-
-            getServletContext().log(
-                    "Errore durante il caricamento dei libri",
-                    e
-            );
-
-            throw new ServletException(
-                    "Impossibile caricare la lista dei libri."
-            );
+            gestisciErroreDatabase(e);
         }
+    }
+
+    private void gestisciErroreDatabase(
+            SQLException e) throws ServletException {
+
+        getServletContext().log(
+                "Errore durante il caricamento dei libri",
+                e);
+
+        throw new ServletException(
+                "Impossibile caricare la lista dei libri.",
+                e);
     }
 
     private boolean utenteAutenticato(
@@ -62,7 +72,15 @@ public class ListaLibriServlet extends HttpServlet {
 
         return session != null
                 && Boolean.TRUE.equals(
-                        session.getAttribute("autenticato")
-                );
+                        session.getAttribute("autenticato"));
+    }
+
+    private void vaiAlLogin(
+            HttpServletRequest request,
+            HttpServletResponse response)
+            throws IOException {
+
+        response.sendRedirect(
+                request.getContextPath() + "/login.jsp");
     }
 }
