@@ -1,20 +1,41 @@
 <%@ page language="java"
     contentType="text/html; charset=UTF-8"
-    pageEncoding="UTF-8"%>
+    pageEncoding="UTF-8" %>
+
+<%!
+    private String escapeHtml(Object valore) {
+
+        if (valore == null) {
+            return "";
+        }
+
+        return String.valueOf(valore)
+                .replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+                .replace("\"", "&quot;")
+                .replace("'", "&#39;");
+    }
+%>
 
 <%
-    Object autenticato = session.getAttribute("autenticato");
+    if (!Boolean.TRUE.equals(
+            session.getAttribute("autenticato"))) {
 
-    if (autenticato == null || !(Boolean) autenticato) {
-        response.sendRedirect("login.jsp");
+        response.sendRedirect(
+                request.getContextPath() + "/login.jsp"
+        );
         return;
     }
 
-    String username = (String) session.getAttribute("username");
+    String username =
+            (String) session.getAttribute("username");
 
-    if (username == null) {
+    if (username == null || username.isBlank()) {
         username = "Utente";
     }
+
+    String contextPath = request.getContextPath();
 %>
 
 <!DOCTYPE html>
@@ -43,6 +64,7 @@
             padding: 8px;
             margin-bottom: 8px;
             border-bottom: 1px solid #eee;
+            overflow-wrap: anywhere;
         }
 
         #testoMessaggio {
@@ -58,7 +80,6 @@
             color: red;
         }
     </style>
-
 </head>
 
 <body>
@@ -67,7 +88,9 @@
 
     <p>
         Utente collegato:
-        <strong id="utenteCorrente"><%= username %></strong>
+        <strong id="utenteCorrente">
+            <%= escapeHtml(username) %>
+        </strong>
     </p>
 
     <hr>
@@ -78,9 +101,13 @@
         type="text"
         id="testoMessaggio"
         placeholder="Scrivi un messaggio..."
-        maxlength="500">
+        maxlength="500"
+        autocomplete="off"
+    >
 
-    <button type="button" id="inviaMessaggio">
+    <button
+        type="button"
+        id="inviaMessaggio">
         Invia
     </button>
 
@@ -88,8 +115,9 @@
 
     <br>
 
-    <a href="home.jsp">Torna alla Home</a>
-
+    <a href="<%= contextPath %>/home.jsp">
+        Torna alla Home
+    </a>
 
     <script type="module">
 
@@ -112,25 +140,23 @@
             limitToLast
         } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-database.js";
 
-
         const firebaseConfig = {
             apiKey: "AIzaSyAgrTpy5JwUQ1AiZjti-At2PDETMG57YbI",
             authDomain: "biblioteca-online-e2d2f.firebaseapp.com",
-            databaseURL: "https://biblioteca-online-e2d2f-default-rtdb.europe-west1.firebasedatabase.app",
+            databaseURL:
+                "https://biblioteca-online-e2d2f-default-rtdb.europe-west1.firebasedatabase.app",
             projectId: "biblioteca-online-e2d2f",
-            storageBucket: "biblioteca-online-e2d2f.firebasestorage.app",
+            storageBucket:
+                "biblioteca-online-e2d2f.firebasestorage.app",
             messagingSenderId: "697697512345",
-            appId: "1:697697512345:web:68a987214955e19065c108",
+            appId:
+                "1:697697512345:web:68a987214955e19065c108",
             measurementId: "G-SXYS62SFN9"
         };
 
-
         const app = initializeApp(firebaseConfig);
-
         const auth = getAuth(app);
-
         const database = getDatabase(app);
-
 
         const username =
             document.getElementById("utenteCorrente")
@@ -149,16 +175,13 @@
         const stato =
             document.getElementById("stato");
 
-
         pulsante.disabled = true;
 
         avviaChat();
 
-
         async function avviaChat() {
 
             try {
-
                 await signInAnonymously(auth);
 
                 const chatRef = ref(
@@ -172,22 +195,22 @@
                 );
 
                 ascoltaMessaggi(ultimiMessaggi);
-
                 configuraInvio(chatRef);
 
                 pulsante.disabled = false;
-
                 stato.textContent = "";
 
             } catch (errore) {
 
-                console.error(errore);
+                console.error(
+                    "Errore avvio chat:",
+                    errore
+                );
 
                 stato.textContent =
                     "Errore durante l'accesso alla chat.";
             }
         }
-
 
         function ascoltaMessaggi(ultimiMessaggi) {
 
@@ -198,36 +221,51 @@
                     const messaggio =
                         snapshot.val();
 
-                    const div =
-                        document.createElement("div");
+                    if (!messaggioValido(messaggio)) {
+                        return;
+                    }
 
-                    div.className =
-                        "messaggio";
-
-                    const autore =
-                        document.createElement("strong");
-
-                    autore.textContent =
-                        messaggio.username + ": ";
-
-                    const testo =
-                        document.createElement("span");
-
-                    testo.textContent =
-                        messaggio.testo;
-
-                    div.appendChild(autore);
-
-                    div.appendChild(testo);
-
-                    contenitore.appendChild(div);
-
-                    contenitore.scrollTop =
-                        contenitore.scrollHeight;
+                    mostraMessaggio(messaggio);
                 }
             );
         }
 
+        function messaggioValido(messaggio) {
+
+            return messaggio
+                && typeof messaggio.username === "string"
+                && typeof messaggio.testo === "string"
+                && messaggio.username.trim() !== ""
+                && messaggio.testo.trim() !== "";
+        }
+
+        function mostraMessaggio(messaggio) {
+
+            const div =
+                document.createElement("div");
+
+            div.className = "messaggio";
+
+            const autore =
+                document.createElement("strong");
+
+            autore.textContent =
+                messaggio.username + ": ";
+
+            const testo =
+                document.createElement("span");
+
+            testo.textContent =
+                messaggio.testo;
+
+            div.appendChild(autore);
+            div.appendChild(testo);
+
+            contenitore.appendChild(div);
+
+            contenitore.scrollTop =
+                contenitore.scrollHeight;
+        }
 
         function configuraInvio(chatRef) {
 
@@ -241,45 +279,42 @@
                 (event) => {
 
                     if (event.key === "Enter") {
+                        event.preventDefault();
                         inviaMessaggio(chatRef);
                     }
                 }
             );
         }
 
-
         async function inviaMessaggio(chatRef) {
 
             const testo =
                 input.value.trim();
 
-            if (testo === "") {
+            if (testo === "" || testo.length > 500) {
                 return;
             }
 
             pulsante.disabled = true;
-
             stato.textContent = "";
 
             try {
 
                 await push(chatRef, {
-
                     username: username,
-
                     testo: testo,
-
-                    timestamp:
-                        serverTimestamp()
+                    timestamp: serverTimestamp()
                 });
 
                 input.value = "";
-
                 input.focus();
 
             } catch (errore) {
 
-                console.error(errore);
+                console.error(
+                    "Errore invio messaggio:",
+                    errore
+                );
 
                 stato.textContent =
                     "Errore durante l'invio del messaggio.";
@@ -293,5 +328,4 @@
     </script>
 
 </body>
-
 </html>
