@@ -19,7 +19,8 @@ import jakarta.servlet.http.HttpSession;
         "/inserisci_libro.jsp",
         "/inserisci-libro",
         "/modifica-libro",
-        "/modifica_libro.jsp"
+        "/modifica_libro.jsp",
+        "/chat.jsp"
 })
 public class AuthFilter implements Filter {
 
