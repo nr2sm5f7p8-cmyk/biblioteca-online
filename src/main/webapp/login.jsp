@@ -1,4 +1,4 @@
-<%@ page language="java"
+﻿<%@ page language="java"
     contentType="text/html; charset=UTF-8"
     pageEncoding="UTF-8" %>
 
@@ -96,7 +96,7 @@
 
     <br>
 
-    <a href="<%= contextPath %>/registrazione.jsp">
+    <a href="<%= contextPath %>/registrazione">
         Non hai un account? Registrati
     </a>
 

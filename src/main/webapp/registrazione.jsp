@@ -2,6 +2,10 @@
     contentType="text/html; charset=UTF-8"
     pageEncoding="UTF-8" %>
 
+<%@ page import="java.util.List" %>
+<%@ page import="java.util.Collections" %>
+<%@ page import="it.biblioteca.model.Comunita" %>
+
 <%!
     private String escapeHtml(Object valore) {
 
@@ -25,6 +29,7 @@
         response.sendRedirect(
                 request.getContextPath() + "/home.jsp"
         );
+
         return;
     }
 
@@ -54,14 +59,43 @@
     String email = registrazioneFallita
             ? request.getParameter("email")
             : "";
+
+    String telefono = registrazioneFallita
+            ? request.getParameter("telefono")
+            : "";
+
+    String idComunitaSelezionata = registrazioneFallita
+            ? request.getParameter("idComunita")
+            : "";
+
+    String generiPreferiti = registrazioneFallita
+            ? request.getParameter("generiPreferiti")
+            : "";
+
+    @SuppressWarnings("unchecked")
+    List<Comunita> comunita =
+            (List<Comunita>) request.getAttribute("comunita");
+
+    if (comunita == null) {
+        comunita = Collections.emptyList();
+    }
 %>
 
 <!DOCTYPE html>
-<html>
+<html lang="it">
 
 <head>
+
     <meta charset="UTF-8">
-    <title>Registrazione - Biblioteca Online</title>
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0">
+
+    <title>
+        Registrazione - Biblioteca Online
+    </title>
+
 </head>
 
 <body>
@@ -90,93 +124,162 @@
 
     <% } %>
 
-    <form
-        action="<%= contextPath %>/registrazione"
-        method="post">
+    <% if (messaggio == null) { %>
 
-        <label for="nome">
-            Nome:
-        </label>
+        <form
+            action="<%= contextPath %>/registrazione"
+            method="post">
 
-        <input
-            type="text"
-            id="nome"
-            name="nome"
-            value="<%= escapeHtml(nome) %>"
-            autocomplete="given-name"
-            required
-        >
+            <label for="nome">
+                Nome:
+            </label>
 
-        <br><br>
+            <input
+                type="text"
+                id="nome"
+                name="nome"
+                value="<%= escapeHtml(nome) %>"
+                autocomplete="given-name"
+                maxlength="100"
+                required>
 
-        <label for="cognome">
-            Cognome:
-        </label>
+            <br><br>
 
-        <input
-            type="text"
-            id="cognome"
-            name="cognome"
-            value="<%= escapeHtml(cognome) %>"
-            autocomplete="family-name"
-            required
-        >
+            <label for="cognome">
+                Cognome:
+            </label>
 
-        <br><br>
+            <input
+                type="text"
+                id="cognome"
+                name="cognome"
+                value="<%= escapeHtml(cognome) %>"
+                autocomplete="family-name"
+                maxlength="100"
+                required>
 
-        <label for="username">
-            Username:
-        </label>
+            <br><br>
 
-        <input
-            type="text"
-            id="username"
-            name="username"
-            value="<%= escapeHtml(username) %>"
-            autocomplete="username"
-            required
-        >
+            <label for="username">
+                Nickname / Username:
+            </label>
 
-        <br><br>
+            <input
+                type="text"
+                id="username"
+                name="username"
+                value="<%= escapeHtml(username) %>"
+                autocomplete="username"
+                maxlength="100"
+                required>
 
-        <label for="email">
-            Email:
-        </label>
+            <br><br>
 
-        <input
-            type="email"
-            id="email"
-            name="email"
-            value="<%= escapeHtml(email) %>"
-            autocomplete="email"
-            required
-        >
+            <label for="email">
+                Email:
+            </label>
 
-        <br><br>
+            <input
+                type="email"
+                id="email"
+                name="email"
+                value="<%= escapeHtml(email) %>"
+                autocomplete="email"
+                maxlength="255"
+                required>
 
-        <label for="password">
-            Password:
-        </label>
+            <br><br>
 
-        <input
-            type="password"
-            id="password"
-            name="password"
-            minlength="8"
-            maxlength="72"
-            autocomplete="new-password"
-            required
-        >
+            <label for="telefono">
+                Numero di telefono:
+            </label>
 
-        <p>
-            La password deve contenere da 8 a 72 caratteri.
-        </p>
+            <input
+                type="tel"
+                id="telefono"
+                name="telefono"
+                value="<%= escapeHtml(telefono) %>"
+                autocomplete="tel"
+                maxlength="30"
+                required>
 
-        <button type="submit">
-            Registrati
-        </button>
+            <br><br>
 
-    </form>
+            <label for="password">
+                Password:
+            </label>
+
+            <input
+                type="password"
+                id="password"
+                name="password"
+                minlength="8"
+                maxlength="72"
+                autocomplete="new-password"
+                required>
+
+            <p>
+                La password deve contenere da 8 a 72 caratteri.
+            </p>
+
+            <label for="idComunita">
+                Comunità di appartenenza:
+            </label>
+
+            <select
+                id="idComunita"
+                name="idComunita">
+
+                <option value="">
+                    Nessuna comunità
+                </option>
+
+                <% for (Comunita c : comunita) {
+
+                    String id =
+                            String.valueOf(c.getIdComunita());
+
+                    boolean selezionata =
+                            id.equals(idComunitaSelezionata);
+                %>
+
+                    <option
+                        value="<%= c.getIdComunita() %>"
+                        <%= selezionata ? "selected" : "" %>>
+
+                        <%= escapeHtml(c.getNome()) %>
+
+                    </option>
+
+                <% } %>
+
+            </select>
+
+            <br><br>
+
+            <label for="generiPreferiti">
+                Generi di libri preferiti:
+            </label>
+
+            <textarea
+                id="generiPreferiti"
+                name="generiPreferiti"
+                maxlength="500"
+                rows="4"
+                cols="40"
+                placeholder="Es. Fantasy, thriller, fantascienza"><%= escapeHtml(generiPreferiti) %></textarea>
+
+            <p>
+                Campo opzionale. Puoi indicare più generi separati da virgole.
+            </p>
+
+            <button type="submit">
+                Registrati
+            </button>
+
+        </form>
+
+    <% } %>
 
     <br>
 
@@ -185,4 +288,5 @@
     </a>
 
 </body>
+
 </html>
