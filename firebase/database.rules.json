@@ -1,0 +1,25 @@
+{
+  "rules": {
+    "chat": {
+      "messaggi": {
+        ".read": "auth != null",
+        "$messaggioId": {
+          ".write": "auth != null",
+          ".validate": "newData.hasChildren(['username', 'testo', 'timestamp'])",
+          "username": {
+            ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 100"
+          },
+          "testo": {
+            ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 500"
+          },
+          "timestamp": {
+            ".validate": "newData.isNumber()"
+          },
+          "$altro": {
+            ".validate": false
+          }
+        }
+      }
+    }
+  }
+}
