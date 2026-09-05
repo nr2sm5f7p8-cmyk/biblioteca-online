@@ -19,69 +19,163 @@ import jakarta.servlet.http.HttpSession;
 @WebServlet("/login")
 public class LoginServlet extends HttpServlet {
 
-	private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 1L;
 
-	private final UtenteDAO utenteDAO = new UtenteDAO();
-	private final SecureRandom random = new SecureRandom();
+    private static final int DURATA_OTP_MINUTI = 5;
+    private static final int NUMERO_VALORI_OTP = 1_000_000;
 
-	@Override
-	protected void doPost(HttpServletRequest request, HttpServletResponse response)
-			throws ServletException, IOException {
+    private final UtenteDAO utenteDAO = new UtenteDAO();
+    private final SecureRandom random = new SecureRandom();
 
-		String username = request.getParameter("username");
-		String password = request.getParameter("password");
+    @Override
+    protected void doPost(HttpServletRequest request,
+                          HttpServletResponse response)
+            throws ServletException, IOException {
 
-		try {
-			Utente utente = utenteDAO.trovaPerUsername(username);
+        request.setCharacterEncoding("UTF-8");
 
-			if (!credenzialiValide(utente, password)) {
-				mostraErrore(request, response);
-				return;
-			}
+        String username = request.getParameter("username");
+        String password = request.getParameter("password");
 
-			preparaOtp(utente, request);
+        if (!inputValido(username, password)) {
+            mostraErroreLogin(request, response);
+            return;
+        }
 
-			response.sendRedirect("otp.jsp");
+        username = username.trim();
 
-		} catch (SQLException e) {
-			throw new ServletException("Errore durante il login", e);
-		}
-	}
+        try {
+            Utente utente = utenteDAO.trovaPerUsername(username);
 
-	private boolean credenzialiValide(Utente utente, String password) {
+            if (!credenzialiValide(utente, password)) {
+                mostraErroreLogin(request, response);
+                return;
+            }
 
-		return utente != null && BCrypt.checkpw(password, utente.getPasswordHash());
-	}
+            preparaOtp(utente, request);
 
-	private void preparaOtp(Utente utente, HttpServletRequest request) throws SQLException {
+            response.sendRedirect(
+                    request.getContextPath() + "/otp.jsp"
+            );
 
-		String otp = generaOtp();
+        } catch (SQLException e) {
 
-		String otpHash = BCrypt.hashpw(otp, BCrypt.gensalt());
+            getServletContext().log(
+                    "Errore database durante il login",
+                    e
+            );
 
-		LocalDateTime scadenza = LocalDateTime.now().plusMinutes(5);
+            mostraErroreSistema(request, response);
+        }
+    }
 
-		utenteDAO.salvaOtp(utente.getIdUtente(), otpHash, scadenza);
+    private boolean inputValido(String username, String password) {
 
-		HttpSession session = request.getSession();
+        return username != null
+                && !username.isBlank()
+                && password != null
+                && !password.isBlank();
+    }
 
-		session.setAttribute("utenteOtpId", utente.getIdUtente());
+    private boolean credenzialiValide(
+            Utente utente,
+            String password) {
 
-		System.out.println("OTP DI TEST PER " + utente.getUsername() + ": " + otp);
-	}
+        if (utente == null) {
+            return false;
+        }
 
-	private String generaOtp() {
+        try {
+            return BCrypt.checkpw(
+                    password,
+                    utente.getPasswordHash()
+            );
+        } catch (IllegalArgumentException e) {
+            return false;
+        }
+    }
 
-		int numero = random.nextInt(1_000_000);
+    private void preparaOtp(
+            Utente utente,
+            HttpServletRequest request) throws SQLException {
 
-		return String.format("%06d", numero);
-	}
+        String otp = generaOtp();
+        String otpHash = BCrypt.hashpw(
+                otp,
+                BCrypt.gensalt()
+        );
 
-	private void mostraErrore(HttpServletRequest request, HttpServletResponse response)
-			throws ServletException, IOException {
+        LocalDateTime scadenza = LocalDateTime.now()
+                .plusMinutes(DURATA_OTP_MINUTI);
 
-		request.setAttribute("errore", "Username o password non corretti.");
+        utenteDAO.salvaOtp(
+                utente.getIdUtente(),
+                otpHash,
+                scadenza
+        );
 
-		request.getRequestDispatcher("/login.jsp").forward(request, response);
-	}
+        creaSessioneOtp(request, utente.getIdUtente());
+
+        getServletContext().log(
+                "OTP DI TEST PER "
+                + utente.getUsername()
+                + ": "
+                + otp
+        );
+    }
+
+    private void creaSessioneOtp(
+            HttpServletRequest request,
+            int idUtente) {
+
+        HttpSession vecchiaSessione =
+                request.getSession(false);
+
+        if (vecchiaSessione != null) {
+            vecchiaSessione.invalidate();
+        }
+
+        HttpSession nuovaSessione =
+                request.getSession(true);
+
+        nuovaSessione.setAttribute(
+                "utenteOtpId",
+                idUtente
+        );
+    }
+
+    private String generaOtp() {
+
+        int numero = random.nextInt(NUMERO_VALORI_OTP);
+
+        return String.format("%06d", numero);
+    }
+
+    private void mostraErroreLogin(
+            HttpServletRequest request,
+            HttpServletResponse response)
+            throws ServletException, IOException {
+
+        request.setAttribute(
+                "errore",
+                "Username o password non corretti."
+        );
+
+        request.getRequestDispatcher("/login.jsp")
+               .forward(request, response);
+    }
+
+    private void mostraErroreSistema(
+            HttpServletRequest request,
+            HttpServletResponse response)
+            throws ServletException, IOException {
+
+        request.setAttribute(
+                "errore",
+                "Si e verificato un errore. Riprova piu tardi."
+        );
+
+        request.getRequestDispatcher("/login.jsp")
+               .forward(request, response);
+    }
 }

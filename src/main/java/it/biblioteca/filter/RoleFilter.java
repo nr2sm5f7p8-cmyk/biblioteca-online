@@ -22,9 +22,10 @@ public class RoleFilter implements Filter {
     private static final int SERVIZIO_TECNICO = 3;
 
     @Override
-    public void doFilter(ServletRequest request,
-                         ServletResponse response,
-                         FilterChain chain)
+    public void doFilter(
+            ServletRequest request,
+            ServletResponse response,
+            FilterChain chain)
             throws IOException, ServletException {
 
         HttpServletRequest httpRequest =
@@ -36,28 +37,49 @@ public class RoleFilter implements Filter {
         HttpSession session =
                 httpRequest.getSession(false);
 
-        if (session == null) {
+        if (!sessioneAutenticata(session)) {
             httpResponse.sendRedirect(
-                    httpRequest.getContextPath() + "/login.jsp");
+                    httpRequest.getContextPath() + "/login.jsp"
+            );
             return;
         }
 
-        Integer idRuolo =
-                (Integer) session.getAttribute("idRuolo");
-
+        Integer idRuolo = recuperaRuolo(session);
         String uri = httpRequest.getRequestURI();
 
         if (!ruoloAutorizzato(uri, idRuolo)) {
             httpResponse.sendRedirect(
-                    httpRequest.getContextPath() + "/home.jsp");
+                    httpRequest.getContextPath() + "/home.jsp"
+            );
             return;
         }
 
         chain.doFilter(request, response);
     }
 
-    private boolean ruoloAutorizzato(String uri,
-                                     Integer idRuolo) {
+    private boolean sessioneAutenticata(HttpSession session) {
+
+        return session != null
+                && Boolean.TRUE.equals(
+                        session.getAttribute("autenticato")
+                );
+    }
+
+    private Integer recuperaRuolo(HttpSession session) {
+
+        Object valore =
+                session.getAttribute("idRuolo");
+
+        if (valore instanceof Integer) {
+            return (Integer) valore;
+        }
+
+        return null;
+    }
+
+    private boolean ruoloAutorizzato(
+            String uri,
+            Integer idRuolo) {
 
         if (idRuolo == null) {
             return false;

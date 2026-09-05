@@ -20,7 +20,13 @@ public class UtenteDAO {
             + "VALUES (?, ?, ?, ?, ?, ?, ?)";
 
     private static final String SELECT_USERNAME =
-            "SELECT * FROM utenti WHERE username = ? AND attivo = TRUE";
+            "SELECT * FROM utenti "
+            + "WHERE username = ? AND attivo = TRUE";
+
+    private static final String SELECT_USERNAME_EMAIL =
+            "SELECT 1 FROM utenti "
+            + "WHERE username = ? OR email = ? "
+            + "LIMIT 1";
 
     public boolean inserisci(Utente utente) throws SQLException {
 
@@ -34,7 +40,8 @@ public class UtenteDAO {
     }
 
     private void impostaParametriInserimento(
-            PreparedStatement ps, Utente utente) throws SQLException {
+            PreparedStatement ps,
+            Utente utente) throws SQLException {
 
         ps.setString(1, utente.getNome());
         ps.setString(2, utente.getCognome());
@@ -45,10 +52,29 @@ public class UtenteDAO {
         ps.setBoolean(7, utente.isAttivo());
     }
 
-    public Utente trovaPerUsername(String username) throws SQLException {
+    public boolean esisteUsernameOEmail(
+            String username,
+            String email) throws SQLException {
 
         try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(SELECT_USERNAME)) {
+             PreparedStatement ps =
+                     conn.prepareStatement(SELECT_USERNAME_EMAIL)) {
+
+            ps.setString(1, username);
+            ps.setString(2, email);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
+        }
+    }
+
+    public Utente trovaPerUsername(String username)
+            throws SQLException {
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps =
+                     conn.prepareStatement(SELECT_USERNAME)) {
 
             ps.setString(1, username);
 
@@ -58,7 +84,8 @@ public class UtenteDAO {
         }
     }
 
-    public Utente trovaPerId(int idUtente) throws SQLException {
+    public Utente trovaPerId(int idUtente)
+            throws SQLException {
 
         String sql =
                 "SELECT * FROM utenti "
@@ -75,7 +102,8 @@ public class UtenteDAO {
         }
     }
 
-    private Utente creaUtente(ResultSet rs) throws SQLException {
+    private Utente creaUtente(ResultSet rs)
+            throws SQLException {
 
         Utente utente = new Utente();
 
@@ -91,9 +119,10 @@ public class UtenteDAO {
         return utente;
     }
 
-    public void salvaOtp(int idUtente,
-                         String otpHash,
-                         LocalDateTime scadenza) throws SQLException {
+    public void salvaOtp(
+            int idUtente,
+            String otpHash,
+            LocalDateTime scadenza) throws SQLException {
 
         String sql =
                 "UPDATE utenti "
@@ -104,15 +133,19 @@ public class UtenteDAO {
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setString(1, otpHash);
-            ps.setTimestamp(2, Timestamp.valueOf(scadenza));
+            ps.setTimestamp(
+                    2,
+                    Timestamp.valueOf(scadenza)
+            );
             ps.setInt(3, idUtente);
 
             ps.executeUpdate();
         }
     }
 
-    public boolean verificaOtp(int idUtente, String otp)
-            throws SQLException {
+    public boolean verificaOtp(
+            int idUtente,
+            String otp) throws SQLException {
 
         String sql =
                 "SELECT otp_hash, otp_scadenza "
@@ -130,20 +163,42 @@ public class UtenteDAO {
                     return false;
                 }
 
-                String hash = rs.getString("otp_hash");
-                Timestamp scadenza = rs.getTimestamp("otp_scadenza");
+                String hash =
+                        rs.getString("otp_hash");
+
+                Timestamp scadenza =
+                        rs.getTimestamp("otp_scadenza");
 
                 if (hash == null || scadenza == null) {
                     return false;
                 }
 
                 if (scadenza.before(
-                        new Timestamp(System.currentTimeMillis()))) {
+                        new Timestamp(
+                                System.currentTimeMillis()
+                        ))) {
                     return false;
                 }
 
                 return BCrypt.checkpw(otp, hash);
             }
+        }
+    }
+
+    public void cancellaOtp(int idUtente)
+            throws SQLException {
+
+        String sql =
+                "UPDATE utenti "
+                + "SET otp_hash = NULL, otp_scadenza = NULL "
+                + "WHERE id_utente = ?";
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, idUtente);
+
+            ps.executeUpdate();
         }
     }
 }

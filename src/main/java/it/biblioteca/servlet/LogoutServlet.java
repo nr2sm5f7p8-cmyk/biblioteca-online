@@ -14,8 +14,9 @@ public class LogoutServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
 
     @Override
-    protected void doGet(HttpServletRequest request,
-                         HttpServletResponse response)
+    protected void doGet(
+            HttpServletRequest request,
+            HttpServletResponse response)
             throws IOException {
 
         HttpSession session = request.getSession(false);
@@ -24,6 +25,8 @@ public class LogoutServlet extends HttpServlet {
             session.invalidate();
         }
 
-        response.sendRedirect("index.jsp");
+        response.sendRedirect(
+                request.getContextPath() + "/index.jsp"
+        );
     }
 }
